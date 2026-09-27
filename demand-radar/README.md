@@ -71,6 +71,14 @@ sources ──► signals ──► concepts ──► scores ──► report
 
 Phrases are merged with average-linkage clustering until no two groups are more similar than `--cluster-threshold` (defaults: 0.35 for tfidf, 0.55 for sbert). Raise the threshold for tighter themes; lower it for broader ones.
 
+## Troubleshooting
+
+**`CERTIFICATE_VERIFY_FAILED`.** On macOS the tool already trusts every certificate in the Keychain, including company certificates installed by IT. If it still fails:
+- **Python from python.org:** run `open "/Applications/Python 3.X/Install Certificates.command"`, using your version number.
+- **Work network, VPN or security software that inspects HTTPS:** export your company's root certificate and run `export SSL_CERT_FILE=/path/to/root.pem`.
+
+**`command not found: python`.** Use `python3`.
+
 ## Tests
 
 ```bash

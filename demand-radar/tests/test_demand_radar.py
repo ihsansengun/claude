@@ -4,10 +4,15 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import contextlib
+import io
+import ssl
 import sys
 import types
+from unittest import mock
 
-from demand_radar.cli import main
+from demand_radar import http
+from demand_radar.cli import collect, main
 from demand_radar.cluster import agglomerate, cluster_phrases
 from demand_radar.extract import assign_concepts, emergent_phrases, has_intent, load_taxonomy
 from demand_radar.models import Signal
@@ -255,6 +260,50 @@ class EndToEnd(unittest.TestCase):
         self.assertRegex(themed, r"\| plant watering \|.*\*\*new\*\* \|")
         self.assertIn("## Emerging phrases", plain)
         self.assertNotIn("## Emerging themes", plain)
+
+
+class Tls(unittest.TestCase):
+    def tearDown(self):
+        http.ssl_context.cache_clear()
+
+    @staticmethod
+    def _some_real_certs(n=3):
+        bundle = Path(ssl.get_default_verify_paths().openssl_cafile or "/etc/ssl/certs/ca-certificates.crt")
+        if not bundle.is_file():
+            raise unittest.SkipTest("no system CA bundle to borrow certificates from")
+        end = "-----END CERTIFICATE-----"
+        return "".join(c + end + "\n" for c in bundle.read_text().split(end)[:n])
+
+    def test_macos_keychain_certs_are_trusted(self):
+        pem = self._some_real_certs(3) + "-----BEGIN CERTIFICATE-----\nnot base64!!\n-----END CERTIFICATE-----\n"
+        baseline = ssl.create_default_context().cert_store_stats()["x509_ca"]
+        with mock.patch.object(http.sys, "platform", "darwin"), mock.patch.object(http, "_keychain_pem", return_value=pem):
+            http.ssl_context.cache_clear()
+            ctx = http.ssl_context()
+        self.assertEqual(ctx.verify_mode, ssl.CERT_REQUIRED)
+        self.assertTrue(ctx.check_hostname)
+        self.assertGreaterEqual(ctx.cert_store_stats()["x509_ca"], min(3, baseline + 1))
+
+    def test_bad_keychain_entry_skipped(self):
+        ctx = ssl.create_default_context()
+        pem = self._some_real_certs(2) + "-----BEGIN CERTIFICATE-----\ngarbage\n-----END CERTIFICATE-----\n"
+        self.assertEqual(http._load_pem_bundle(ctx, pem), 2)
+
+    def test_keychain_unavailable_still_verifies(self):
+        with mock.patch.object(http.sys, "platform", "darwin"), \
+                mock.patch.object(http, "_keychain_pem", side_effect=FileNotFoundError("security")):
+            http.ssl_context.cache_clear()
+            self.assertEqual(http.ssl_context().verify_mode, ssl.CERT_REQUIRED)
+
+    def test_hint_when_every_source_fails_certificates(self):
+        def boom(days):
+            raise OSError("<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed>")
+
+        fake = {"a": types.SimpleNamespace(fetch=boom), "b": types.SimpleNamespace(fetch=boom)}
+        err = io.StringIO()
+        with mock.patch("demand_radar.cli.REGISTRY", fake), contextlib.redirect_stderr(err):
+            self.assertEqual(collect(["a", "b"], 30), [])
+        self.assertIn("Install Certificates.command", err.getvalue())
 
 
 if __name__ == "__main__":

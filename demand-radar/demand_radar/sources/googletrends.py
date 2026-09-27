@@ -30,7 +30,7 @@ from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 
-from ..http import USER_AGENT
+from ..http import USER_AGENT, get, ssl_context
 from ..models import Signal
 
 NAME = "googletrends"
@@ -113,7 +113,10 @@ def parse_interest(payload: dict, term: str, concept: str) -> list[Signal]:
 
 class _Session:
     def __init__(self) -> None:
-        self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+        self.opener = urllib.request.build_opener(
+            urllib.request.HTTPSHandler(context=ssl_context()),
+            urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()),
+        )
         self.opener.addheaders = [("User-Agent", USER_AGENT), ("Accept-Language", "en-US")]
         # Visiting the home page sets the NID cookie; the API 429s without it.
         self.get(f"https://trends.google.com/trends/?geo={GEO}")
@@ -162,9 +165,8 @@ def fetch(days: int) -> list[Signal]:
     signals: list[Signal] = []
     errors = []
     try:
-        req = urllib.request.Request(f"https://trends.google.com/trending/rss?geo={GEO}", headers={"User-Agent": USER_AGENT})
-        with urllib.request.urlopen(req, timeout=20) as resp:
-            signals += [s for s in parse_trending(resp.read()) if s.created_at is None or s.created_at >= cutoff]
+        rss = get(f"https://trends.google.com/trending/rss?geo={GEO}")
+        signals += [s for s in parse_trending(rss) if s.created_at is None or s.created_at >= cutoff]
     except Exception as exc:
         errors.append(f"trending RSS: {exc}")
     try:

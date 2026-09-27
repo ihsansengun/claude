@@ -15,8 +15,18 @@ from .scoring import score_concepts
 from .sources import REGISTRY
 
 
+CERT_HINT = """
+Every HTTPS request failed certificate verification. Usually one of:
+  - Python from python.org on macOS without CA certificates. Fix:
+      open "/Applications/Python 3.X/Install Certificates.command"   (your version)
+  - A work network/VPN or security tool that inspects HTTPS. Point Python at
+    its root certificate:  export SSL_CERT_FILE=/path/to/company-root.pem
+"""
+
+
 def collect(names: list[str], days: int) -> list[Signal]:
     signals: list[Signal] = []
+    cert_failures = 0
     for name in names:
         try:
             got = REGISTRY[name].fetch(days)
@@ -24,6 +34,9 @@ def collect(names: list[str], days: int) -> list[Signal]:
             signals += got
         except Exception as exc:  # one flaky source shouldn't sink the run
             print(f"  {name}: FAILED ({exc})", file=sys.stderr)
+            cert_failures += "CERTIFICATE_VERIFY_FAILED" in str(exc)
+    if names and cert_failures == len(names):
+        print(CERT_HINT, file=sys.stderr)
     return signals
 
 
