@@ -1,0 +1,372 @@
+{
+  "_comment": "Concept -> keyword phrases. Matching is case-insensitive on whole words; a trailing * matches any suffix (e.g. 'habit*'). Edit freely.",
+  "AI agents & automation": [
+    "ai agent*",
+    "agentic",
+    "autonomous agent*",
+    "workflow automation",
+    "automate*",
+    "mcp server*"
+  ],
+  "AI coding assistants": [
+    "coding assistant*",
+    "code review",
+    "copilot",
+    "code generation",
+    "vibe coding",
+    "ai ide",
+    "coding agent*"
+  ],
+  "AI note taking & meeting summaries": [
+    "meeting notes",
+    "note taker",
+    "meeting summar*",
+    "transcri*",
+    "note-taking",
+    "note taking"
+  ],
+  "AI chat & companions": [
+    "chatbot*",
+    "ai companion*",
+    "ai friend",
+    "character ai",
+    "ai chat"
+  ],
+  "AI image & video generation": [
+    "image generat*",
+    "video generat*",
+    "text-to-video",
+    "text to video",
+    "ai art",
+    "ai avatar*",
+    "ai photo*",
+    "headshot*"
+  ],
+  "Voice & speech AI": [
+    "voice clon*",
+    "text to speech",
+    "text-to-speech",
+    "speech to text",
+    "voice assistant*",
+    "voice agent*",
+    "dictation"
+  ],
+  "Personal knowledge & notes": [
+    "second brain",
+    "notes app",
+    "note app",
+    "knowledge base",
+    "obsidian",
+    "notion",
+    "journal*"
+  ],
+  "Habit & productivity tracking": [
+    "habit*",
+    "to-do",
+    "todo",
+    "task manager",
+    "pomodoro",
+    "focus app",
+    "productivity",
+    "time track*"
+  ],
+  "Screen time & digital wellbeing": [
+    "screen time",
+    "app blocker",
+    "phone addiction",
+    "dopamine",
+    "doomscroll*",
+    "digital detox",
+    "distraction*"
+  ],
+  "Fitness & workout": [
+    "workout*",
+    "fitness",
+    "gym",
+    "strength training",
+    "running app",
+    "step counter",
+    "exercise"
+  ],
+  "Diet, nutrition & calorie tracking": [
+    "calorie*",
+    "nutrition",
+    "meal plan*",
+    "diet",
+    "macros",
+    "food log*",
+    "glp-1",
+    "ozempic"
+  ],
+  "Sleep": [
+    "sleep*",
+    "insomnia",
+    "white noise"
+  ],
+  "Mental health & therapy": [
+    "mental health",
+    "therapy",
+    "anxiety",
+    "meditation",
+    "mindfulness",
+    "mood track*",
+    "adhd"
+  ],
+  "Personal finance & budgeting": [
+    "budget*",
+    "expense track*",
+    "personal finance",
+    "spending",
+    "savings",
+    "net worth",
+    "subscription track*"
+  ],
+  "Investing & trading": [
+    "stocks",
+    "stock market",
+    "trading",
+    "portfolio*",
+    "crypto",
+    "investing",
+    "investment*",
+    "investor*"
+  ],
+  "Invoicing & freelancer tools": [
+    "invoic*",
+    "freelanc*",
+    "bookkeeping",
+    "accounting",
+    "receipt*",
+    "tax",
+    "taxes",
+    "tax return*"
+  ],
+  "Dating & social": [
+    "dating",
+    "matchmaking",
+    "social network",
+    "meet people",
+    "friends app",
+    "loneliness"
+  ],
+  "Language learning & education": [
+    "language learning",
+    "learn a language",
+    "flashcard*",
+    "duolingo",
+    "tutor",
+    "tutoring",
+    "study app",
+    "homework",
+    "online course*"
+  ],
+  "Parenting & family": [
+    "parent*",
+    "kids",
+    "baby",
+    "family organiz*",
+    "chore*",
+    "co-parent*"
+  ],
+  "Pets": [
+    "pet",
+    "pets",
+    "pet owner*",
+    "dog",
+    "dogs",
+    "puppy",
+    "cat",
+    "cats",
+    "kitten*",
+    "vet"
+  ],
+  "Travel & trip planning": [
+    "travel",
+    "trip plan*",
+    "itinerar*",
+    "flight*",
+    "hotel*",
+    "vacation"
+  ],
+  "Food, recipes & cooking": [
+    "recipe*",
+    "cooking",
+    "grocery",
+    "pantry",
+    "meal prep"
+  ],
+  "Local services & marketplaces": [
+    "marketplace",
+    "booking",
+    "local business*",
+    "handyman",
+    "freelance marketplace"
+  ],
+  "E-commerce & selling": [
+    "shopify",
+    "ecommerce",
+    "e-commerce",
+    "dropshipping",
+    "online store",
+    "etsy",
+    "reseller*"
+  ],
+  "Marketing, SEO & social media tools": [
+    "seo",
+    "social media",
+    "content calendar",
+    "newsletter*",
+    "cold email",
+    "lead gen*",
+    "marketing"
+  ],
+  "Customer support & CRM": [
+    "crm",
+    "customer support",
+    "helpdesk",
+    "help desk",
+    "ticketing",
+    "live chat"
+  ],
+  "Hiring, jobs & resumes": [
+    "resume*",
+    "job search",
+    "job board",
+    "hiring",
+    "recruit*",
+    "interview*",
+    "cover letter*"
+  ],
+  "Developer tools & infra": [
+    "developer tool*",
+    "cli",
+    "devops",
+    "database*",
+    "observability",
+    "self-hosted",
+    "open source",
+    "open-source",
+    "kubernetes",
+    "sdk"
+  ],
+  "Privacy & security": [
+    "privacy",
+    "password*",
+    "vpn",
+    "encrypt*",
+    "security",
+    "tracking protection"
+  ],
+  "Home, real estate & smart home": [
+    "smart home",
+    "home automation",
+    "real estate",
+    "rent",
+    "renting",
+    "rental*",
+    "landlord*",
+    "tenant*",
+    "home assistant"
+  ],
+  "Cars & transport": [
+    "car",
+    "cars",
+    "ev charging",
+    "parking",
+    "commute*",
+    "mileage",
+    "vehicle*"
+  ],
+  "Health records & medical": [
+    "medication*",
+    "symptom*",
+    "doctor*",
+    "health record*",
+    "wearable*",
+    "blood pressure",
+    "glucose"
+  ],
+  "Photo & video editing": [
+    "photo edit*",
+    "video edit*",
+    "background remov*",
+    "photo filter*",
+    "collage",
+    "reels"
+  ],
+  "Music & audio": [
+    "music",
+    "playlist*",
+    "podcast*",
+    "audiobook*",
+    "guitar",
+    "piano"
+  ],
+  "Reading & books": [
+    "book",
+    "books",
+    "reading list",
+    "ebook*",
+    "kindle",
+    "read later"
+  ],
+  "Games & gamification": [
+    "game*",
+    "gaming",
+    "puzzle*",
+    "multiplayer",
+    "gamif*"
+  ],
+  "Events, calendar & scheduling": [
+    "calendar*",
+    "schedul*",
+    "appointment*",
+    "event plan*",
+    "rsvp"
+  ],
+  "Communication & messaging": [
+    "messaging",
+    "messenger",
+    "group chat",
+    "email client",
+    "inbox",
+    "walkie"
+  ],
+  "File, docs & PDF tools": [
+    "pdf*",
+    "document scan*",
+    "scanner",
+    "file shar*",
+    "ocr",
+    "e-sign*",
+    "signature*"
+  ],
+  "Browsers & extensions": [
+    "browser",
+    "chrome extension",
+    "browser extension",
+    "tab manag*",
+    "bookmark*"
+  ],
+  "Weather & outdoors": [
+    "weather",
+    "hiking",
+    "camping",
+    "fishing",
+    "outdoor*"
+  ],
+  "Sustainability & climate": [
+    "carbon",
+    "climate",
+    "recycl*",
+    "solar",
+    "sustainab*"
+  ],
+  "Accessibility": [
+    "accessibility",
+    "blind",
+    "deaf",
+    "screen reader",
+    "dyslexi*"
+  ]
+}

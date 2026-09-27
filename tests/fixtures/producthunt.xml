@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Product Hunt</title>
+  <entry>
+    <id>tag:www.producthunt.com,2005:Post/1</id>
+    <published>2026-09-26T07:01:00-07:00</published>
+    <link rel="alternate" type="text/html" href="https://www.producthunt.com/products/nightowl"/>
+    <title>Nightowl</title>
+    <content type="html">&lt;p&gt;AI sleep coach that adapts to your schedule&lt;/p&gt;</content>
+  </entry>
+</feed>
