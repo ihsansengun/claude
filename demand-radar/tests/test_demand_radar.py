@@ -75,6 +75,44 @@ class SourceParsers(unittest.TestCase):
         self.assertEqual(googletrends._traffic("10K+"), 10_000)
         self.assertEqual(googletrends._traffic(None), 0)
 
+    def test_googletrends_retries_once_after_429(self):
+        import urllib.error
+
+        payload = googletrends._strip_xssi((FIXTURES / "trends_multiline.txt").read_bytes())
+        calls = {"sessions": 0, "interest": 0}
+
+        class FakeSession:
+            def __init__(self):
+                calls["sessions"] += 1
+
+            def interest(self, term, frame):
+                calls["interest"] += 1
+                if calls["interest"] == 1:
+                    raise urllib.error.HTTPError("u", 429, "Too Many Requests", {}, None)
+                return payload
+
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            out = googletrends.fetch_interest(30, {"Sleep": "sleep app", "Pets": "pet app"},
+                                              session_factory=FakeSession, sleep=lambda s: None)
+        self.assertEqual(calls["sessions"], 2)  # fresh session after the refusal
+        self.assertEqual({s.series_for for s in out}, {"Sleep", "Pets"})
+        self.assertIn("retrying once", err.getvalue())
+
+    def test_googletrends_gives_up_after_second_429(self):
+        import urllib.error
+
+        class Refusing:
+            def interest(self, term, frame):
+                raise urllib.error.HTTPError("u", 429, "Too Many Requests", {}, None)
+
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            out = googletrends.fetch_interest(30, {"Sleep": "sleep app"}, session_factory=Refusing,
+                                              sleep=lambda s: None)
+        self.assertEqual(out, [])
+        self.assertIn("still refused", err.getvalue())
+
     def test_search_terms_match_taxonomy(self):
         self.assertEqual(set(googletrends.load_terms()), set(load_taxonomy()))
 

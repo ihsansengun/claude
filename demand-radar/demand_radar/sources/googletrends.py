@@ -30,13 +30,20 @@ from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 
-from ..http import USER_AGENT, get, ssl_context
+from ..http import get, ssl_context
 from ..models import Signal
 
 NAME = "googletrends"
 GEO = "US"
 TERMS_FILE = Path(__file__).resolve().parent.parent / "search_terms.json"
 REQUEST_DELAY = 1.5  # seconds between interest requests
+BLOCKED_RETRY_WAIT = 45  # seconds to back off once when Google refuses the first request
+# Google refuses non-browser clients on these unofficial endpoints (instant 429),
+# so interest requests present as a regular browser.
+BROWSER_UA = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+)
 HT = "{https://trends.google.com/trending/rss}"
 
 
@@ -117,9 +124,17 @@ class _Session:
             urllib.request.HTTPSHandler(context=ssl_context()),
             urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()),
         )
-        self.opener.addheaders = [("User-Agent", USER_AGENT), ("Accept-Language", "en-US")]
-        # Visiting the home page sets the NID cookie; the API 429s without it.
-        self.get(f"https://trends.google.com/trends/?geo={GEO}")
+        self.opener.addheaders = [
+            ("User-Agent", BROWSER_UA),
+            ("Accept-Language", "en-US,en;q=0.9"),
+            ("Referer", f"https://trends.google.com/trends/explore?geo={GEO}"),
+        ]
+        # Visiting the site first sets the NID cookie the API expects, like a browser would.
+        for url in (f"https://trends.google.com/?geo={GEO}", f"https://trends.google.com/trends/explore?geo={GEO}"):
+            try:
+                self.get(url)
+            except urllib.error.URLError:
+                pass
 
     def get(self, url: str) -> bytes:
         with self.opener.open(url, timeout=20) as resp:
@@ -144,19 +159,36 @@ def load_terms(path: Path = TERMS_FILE) -> dict[str, str]:
     return {k: v for k, v in json.loads(path.read_text()).items() if not k.startswith("_")}
 
 
-def fetch_interest(days: int, terms: dict[str, str]) -> list[Signal]:
-    session = _Session()
+def fetch_interest(days: int, terms: dict[str, str], *, session_factory=None, sleep=time.sleep) -> list[Signal]:
+    make_session = session_factory or _Session
+    session = make_session()
     signals: list[Signal] = []
     frame = _timeframe(days)
-    for n, (concept, term) in enumerate(terms.items()):
+    retried = False
+    items = list(terms.items())
+    n = 0
+    while n < len(items):
+        concept, term = items[n]
         try:
             signals += parse_interest(session.interest(term, frame), term, concept)
         except urllib.error.HTTPError as exc:
-            if exc.code == 429:
-                print(f"    googletrends: rate limited after {n}/{len(terms)} terms; keeping partial data", file=sys.stderr)
+            if exc.code != 429:
+                print(f"    googletrends: '{term}' failed ({exc})", file=sys.stderr)
+            elif not retried:
+                # Often a cold-session refusal: back off once with fresh cookies.
+                retried = True
+                print(f"    googletrends: Google refused search-interest requests (429); "
+                      f"retrying once in {BLOCKED_RETRY_WAIT}s", file=sys.stderr)
+                sleep(BLOCKED_RETRY_WAIT)
+                session = make_session()
+                continue
+            else:
+                print(f"    googletrends: still refused (429) after {n}/{len(items)} terms; keeping partial data. "
+                      "Google limits this unofficial endpoint; try again later or from another network.",
+                      file=sys.stderr)
                 break
-            print(f"    googletrends: '{term}' failed ({exc})", file=sys.stderr)
-        time.sleep(REQUEST_DELAY)
+        n += 1
+        sleep(REQUEST_DELAY)
     return signals
 
 
