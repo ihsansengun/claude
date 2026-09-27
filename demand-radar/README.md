@@ -2,17 +2,17 @@
 
 Demand Radar finds app ideas and concepts that people want right now. It pulls public signals, groups them into concepts and ranks the concepts by demand.
 
-It uses only the Python standard library (3.10+), and none of the default sources need an API key.
+It uses only the Python standard library (3.9+), and none of the default sources need an API key.
 
 Run all commands from this folder (`cd demand-radar`).
 
 ```bash
-python -m demand_radar                       # all sources, last 30 days, Markdown to stdout
-python -m demand_radar --days 7 --out report.md --json report.json
-python -m demand_radar --sources hackernews,reddit --top 30
-python -m demand_radar --save-signals raw.json      # keep raw data for history or replay
-python -m demand_radar --from-signals raw.json      # re-analyze without fetching
-python -m demand_radar --cluster sbert              # true sentence embeddings (pip install sentence-transformers)
+python3 -m demand_radar                       # all sources, last 30 days, Markdown to stdout
+python3 -m demand_radar --days 7 --out report.md --json report.json
+python3 -m demand_radar --sources hackernews,reddit --top 30
+python3 -m demand_radar --save-signals raw.json      # keep raw data for history or replay
+python3 -m demand_radar --from-signals raw.json      # re-analyze without fetching
+python3 -m demand_radar --cluster sbert              # true sentence embeddings (pip install sentence-transformers)
 ```
 
 ## How it works
