@@ -1,5 +1,2 @@
 __pycache__/
 *.pyc
-/report*.md
-/report*.json
-/raw*.json
