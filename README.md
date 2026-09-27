@@ -35,7 +35,7 @@ sources ──► signals ──► concepts ──► scores ──► report
 
 3. **Detect explicit demand.** Phrases such as "is there an app", "I'd pay for", "wish someone would build" and "alternative to" mark a signal as an **ask**. An ask shows an unmet need, which is a stronger signal than general popularity.
 
-4. **Score** (`scoring.py`). Each concept gets five components. Each component is converted to a percentile across all concepts, so HN points, GitHub stars and chart ranks can be compared. The weighted blend becomes a 0–100 score.
+4. **Score** (`scoring.py`). Each concept gets up to six components. Each component is converted to a percentile across all concepts, so HN points, GitHub stars and chart ranks can be compared. The weighted blend becomes a 0–100 score.
 
    | Component | Weight | Meaning |
    |---|---:|---|
