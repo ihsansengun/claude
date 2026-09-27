@@ -79,8 +79,16 @@ def ssl_context() -> ssl.SSLContext:
     return ctx
 
 
-def get(url: str, *, headers: dict[str, str] | None = None, retries: int = 2, timeout: float = 20) -> bytes:
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, **(headers or {})})
+def get(
+    url: str,
+    *,
+    headers: dict[str, str] | None = None,
+    data: bytes | None = None,
+    retries: int = 2,
+    timeout: float = 20,
+) -> bytes:
+    """Fetch a URL (POST when `data` is given) with retries on transient errors."""
+    req = urllib.request.Request(url, data=data, headers={"User-Agent": USER_AGENT, **(headers or {})})
     for attempt in range(retries + 1):
         try:
             with urllib.request.urlopen(req, timeout=timeout, context=ssl_context()) as resp:

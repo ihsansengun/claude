@@ -306,5 +306,50 @@ class Tls(unittest.TestCase):
         self.assertIn("Install Certificates.command", err.getvalue())
 
 
+class RedditAuth(unittest.TestCase):
+    LISTING = {"data": {"children": [{"data": {"title": "Is there an app for X?", "permalink": "/r/a/1",
+                                                "score": 5, "num_comments": 1, "created_utc": 4102444800}}]}}
+
+    def test_oauth_when_credentials_set(self):
+        calls = []
+
+        def fake_get(url, **kw):
+            calls.append((url, kw))
+            return b'{"access_token": "tok", "expires_in": 86400}'
+
+        def fake_get_json(url, headers):
+            calls.append((url, headers))
+            return self.LISTING
+
+        env = {"REDDIT_CLIENT_ID": "id", "REDDIT_CLIENT_SECRET": "sec"}
+        with mock.patch.dict("os.environ", env), mock.patch.object(reddit, "get", fake_get), \
+                mock.patch.object(reddit, "get_json", fake_get_json):
+            out = reddit.fetch(30)
+        token_url, token_kw = calls[0]
+        self.assertEqual(token_url, "https://www.reddit.com/api/v1/access_token")
+        self.assertEqual(token_kw["data"], b"grant_type=client_credentials")
+        self.assertTrue(token_kw["headers"]["Authorization"].startswith("Basic "))
+        listing_url, headers = calls[1]
+        self.assertTrue(listing_url.startswith("https://oauth.reddit.com/r/SomebodyMakeThis/top?"))
+        self.assertEqual(headers["Authorization"], "bearer tok")
+        self.assertIn("demand-radar", headers["User-Agent"])
+        self.assertEqual(len(out), 1)  # same post from every listing is deduplicated
+
+    def test_anonymous_403_explains_setup(self):
+        import urllib.error
+
+        def blocked(url, headers):
+            raise urllib.error.HTTPError(url, 403, "Blocked", {}, None)
+
+        with mock.patch.dict("os.environ", {}, clear=True), mock.patch.object(reddit, "get_json", blocked):
+            with self.assertRaisesRegex(RuntimeError, "REDDIT_CLIENT_ID"):
+                reddit.fetch(30)
+
+    def test_anonymous_uses_public_json(self):
+        urls = reddit.listing_urls(30, "https://www.reddit.com")
+        self.assertTrue(urls[0].startswith("https://www.reddit.com/r/SomebodyMakeThis/top.json?t=month"))
+        self.assertTrue(any(u.startswith("https://www.reddit.com/search.json?") for u in urls))
+
+
 if __name__ == "__main__":
     unittest.main()

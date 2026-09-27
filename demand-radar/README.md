@@ -59,7 +59,6 @@ sources ──► signals ──► concepts ──► scores ──► report
 - To go deeper on one domain, point `--taxonomy` at a file of narrow sub-concepts (for example, only fitness app types).
 - Set `GITHUB_TOKEN` to raise GitHub's rate limit.
 - Google Trends checks one search term per concept, listed in `demand_radar/search_terms.json`. Trends values are relative to each term's own peak, so only a term's growth is scored, not its size. Choose terms that match how people actually search. Google rate-limits these requests heavily: requests are spaced 1.5s apart, and if Google starts refusing, the tool keeps the data it already has.
-- Reddit rate-limits anonymous clients. If it fails, run it again later or pass `--sources` without it. A failing source is skipped; it doesn't stop the run.
 
 ## Clustering backends
 
@@ -76,6 +75,17 @@ Phrases are merged with average-linkage clustering until no two groups are more 
 **`CERTIFICATE_VERIFY_FAILED`.** On macOS the tool already trusts every certificate in the Keychain, including company certificates installed by IT. If it still fails:
 - **Python from python.org:** run `open "/Applications/Python 3.X/Install Certificates.command"`, using your version number.
 - **Work network, VPN or security software that inspects HTTPS:** export your company's root certificate and run `export SSL_CERT_FILE=/path/to/root.pem`.
+
+**Reddit: `403 Blocked`.** Reddit blocks most scripts that aren't logged in. Use its free official API instead:
+1. Open https://www.reddit.com/prefs/apps and click **create another app…**
+2. Choose **script**, give it any name, and set the redirect uri to `http://localhost:8080`.
+3. Copy the id shown under the app name and the **secret**, then run:
+   ```bash
+   export REDDIT_CLIENT_ID=your_id REDDIT_CLIENT_SECRET=your_secret
+   ```
+   This gives read-only access and doesn't need your Reddit password. Add the line to `~/.zshrc` to keep it for future terminals.
+
+A failing source is skipped; the run continues without it.
 
 **`command not found: python`.** Use `python3`.
 
