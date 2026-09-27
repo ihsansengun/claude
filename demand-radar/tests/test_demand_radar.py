@@ -384,5 +384,62 @@ class RedditAuth(unittest.TestCase):
         self.assertTrue(any(u.startswith("https://www.reddit.com/search.json?") for u in urls))
 
 
+class FirstLiveRunRegressions(unittest.TestCase):
+    """Cases taken from the first real report."""
+
+    def test_long_bodies_and_news_text_dont_assign_concepts(self):
+        tax = load_taxonomy()
+        hn = sig("Show HN: Drop – A rootless Linux sandbox", text="Great for productivity, habit of mine, calendar too")
+        trend = Signal("googletrends", "nfl scores", "u", NOW, "Game recap: Raiders win the game", 100000)
+        gh = Signal("github", "kado: open-source app", "u", NOW, "habit-tracker ios", 500)
+        buckets = assign_concepts([hn, trend, gh], tax)
+        self.assertNotIn("Games & gamification", buckets)
+        self.assertEqual([x.source for x in buckets["Habit & productivity tracking"]], ["github"])
+
+    def test_launch_style_alternatives_are_not_asks(self):
+        for title in [
+            "Good Alternative to the Cloud",
+            "AI Startup launches a faster and cheaper alternative to LLMs for AI automation",
+            "Stripe Withholding Balance of $100000",
+            "Ask HN: How to Reactivate ChatGPT Account? Is there a way?",
+        ]:
+            self.assertFalse(has_intent(sig(title, text="I'm so frustrated. Is there a tool?")), title)
+        self.assertTrue(has_intent(sig("Ask HN: Any Alternatives to Archive.ph & co?")))
+        self.assertTrue(has_intent(sig("Alternatives to Notion for small teams?")))
+        # Reddit asks often live in the body.
+        self.assertTrue(has_intent(sig("Need help", source="reddit", text="Is there an app that does this?")))
+
+    def test_noise_phrases_dropped(self):
+        posts = [sig(f"Hacker News clone in {x}: code and codex") for x in "abc"]
+        phrases = emergent_phrases(posts, min_support=3)
+        self.assertNotIn("hacker news", phrases)
+        self.assertNotIn("code and codex", phrases)
+
+    def test_momentum_is_relative_to_overall_growth(self):
+        # Every concept skews recent because the whole feed does: none should look "rising".
+        def skewed(label):
+            return [sig(f"{label} {d}", days_ago=d) for d in (1, 2, 3, 4, 5, 6, 20)]
+
+        ranked = score_concepts({"A": skewed("a"), "B": skewed("b")}, days=30, now=NOW)
+        for c in ranked:
+            self.assertAlmostEqual(c.momentum, 1.0, places=2)
+
+    def test_momentum_ranks_share_gainers_above_flat(self):
+        flat = [sig(f"f{d}", days_ago=d) for d in (2, 6, 10, 18, 22, 26)]
+        spiking = [sig(f"s{d}", days_ago=d) for d in (1, 1, 2, 2, 3, 3, 4, 25)]
+        feed = flat + spiking + [sig(f"o{d}", days_ago=d) for d in (1, 2, 3, 4, 5, 20)]
+        ranked = {c.concept: c for c in score_concepts({"flat": flat, "spike": spiking}, days=30, now=NOW,
+                                                        population=feed)}
+        self.assertLess(ranked["flat"].momentum, 1)
+        self.assertGreater(ranked["spike"].momentum, 1)
+
+    def test_examples_mix_sources(self):
+        posts = [Signal("github", f"repo {i}", f"g{i}", NOW, "", 5000 + i) for i in range(5)]
+        posts += [sig("small hn post", points=50), sig("another hn post", points=40)]
+        ranked = score_concepts({"X": posts, "Y": posts[:2]}, days=30, now=NOW, examples=4)
+        x = next(c for c in ranked if c.concept == "X")
+        self.assertEqual([e.source for e in x.examples].count("hackernews"), 2)
+
+
 if __name__ == "__main__":
     unittest.main()

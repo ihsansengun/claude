@@ -14,18 +14,18 @@ DEFAULT_TAXONOMY = Path(__file__).with_name("taxonomy.json")
 # Phrases that indicate someone actively wants something that doesn't (yet) satisfy them.
 # These are the strongest demand signals: unmet need + willingness to act/pay.
 INTENT_PATTERNS = [
-    r"\bis there (?:an?|any) (?:app|tool|service|website|extension|way)\b",
+    r"\bis there (?:an?|any) (?:app|tool|service|website|extension)\b",
     r"\b(?:i|we)(?:'d| would) (?:happily )?pay\b",
     r"\bshut up and take my money\b",
     r"\b(?:i )?wish (?:there (?:was|were)|someone (?:would )?(?:made|built|make|build))\b",
     r"\bsomebody (?:should )?make\b",
     r"\blooking for (?:an?|some) (?:app|tool|service|alternative)\b",
-    # Only *asking* for an alternative; a bare "alternative to X" is usually a launch pitch.
-    r"\b(?:any|good|better|cheaper) alternatives? (?:to|for)\b",
+    # Only *asking* for an alternative; "a cheaper alternative to X" is usually a launch pitch.
+    r"\bany (?:good |decent |free |cheaper |open[- ]source )?alternatives? (?:to|for)\b",
+    r"\balternatives? (?:to|for) [^?.!\n]{1,60}\?",
     r"\b(?:is there|know of|recommend) an? (?:[\w-]+ )?alternative\b",
     r"\bneed (?:an?|some) (?:app|tool)\b",
     r"\bwhy (?:is there no|isn't there an?)\b",
-    r"\bfrustrat(?:ed|ing)\b|\bhate (?:using|that)\b",
     r"\bapp idea\b|\brequest:",
 ]
 _INTENT_RE = re.compile("|".join(INTENT_PATTERNS), re.IGNORECASE)
@@ -41,6 +41,9 @@ STOPWORDS = set(
     launch launched launching today introducing project side feedback idea ideas i'd we'd pay wish please
     actually alternative alternatives""".split()
 )
+# Site names and filler that recur in titles without describing a product.
+NOISE_PHRASES = {"hacker news", "ask hn", "show hn", "launch hn", "product hunt", "open source", "open-source"}
+_WEAK_MIDDLE = {"and", "or", "the", "a", "an", "of", "for", "with"}
 _WORD_RE = re.compile(r"[a-z][a-z0-9+\-']*[a-z0-9+]|[a-z]")
 
 
@@ -63,13 +66,26 @@ def load_taxonomy(path: Path | None = None) -> dict[str, re.Pattern]:
 # Sources that list things people *made* (supply), never requests for something.
 SUPPLY_SOURCES = {"github", "producthunt", "appstore", "googletrends"}
 _LAUNCH_RE = re.compile(r"^\s*(?:show|launch) hn\b", re.IGNORECASE)
+# Sources whose `text` is long free-form prose (post bodies, attached news
+# headlines). Keywords there are mostly incidental, so concepts are matched on
+# the title only. Other sources' text is short and structured (GitHub topics,
+# App Store genres, Product Hunt taglines) and describes the item itself.
+TITLE_ONLY_SOURCES = {"hackernews", "reddit", "googletrends"}
+# Reddit self-posts often put the ask in the body ("is there an app that…").
+INTENT_BODY_SOURCES = {"reddit"}
+
+
+def concept_text(signal: Signal) -> str:
+    """The text taxonomy keywords are matched against."""
+    return signal.title if signal.source in TITLE_ONLY_SOURCES else signal.body
 
 
 def has_intent(signal: Signal) -> bool:
     """True when the post asks for a product, rather than launching one."""
     if signal.source in SUPPLY_SOURCES or _LAUNCH_RE.match(signal.title):
         return False
-    return bool(_INTENT_RE.search(signal.body))
+    text = signal.body if signal.source in INTENT_BODY_SOURCES else signal.title
+    return bool(_INTENT_RE.search(text))
 
 
 def assign_concepts(signals: list[Signal], taxonomy: dict[str, re.Pattern]) -> dict[str, list[Signal]]:
@@ -83,9 +99,9 @@ def assign_concepts(signals: list[Signal], taxonomy: dict[str, re.Pattern]) -> d
             if sig.series_for in taxonomy:
                 buckets[sig.series_for].append(sig)
             continue
-        body = sig.body
+        text = concept_text(sig)
         for concept, pattern in taxonomy.items():
-            if pattern.search(body):
+            if pattern.search(text):
                 buckets[concept].append(sig)
     return dict(buckets)
 
@@ -112,6 +128,8 @@ def emergent_phrases(signals: list[Signal], min_support: int = 3, top: int = 40)
             for i in range(len(words) - n + 1):
                 gram = words[i : i + n]
                 if gram[0] in STOPWORDS or gram[-1] in STOPWORDS or any(w.isdigit() for w in gram):
+                    continue
+                if (n == 3 and gram[1] in _WEAK_MIDDLE) or " ".join(gram) in NOISE_PHRASES:
                     continue
                 grams.add(" ".join(gram))
         for g in grams:

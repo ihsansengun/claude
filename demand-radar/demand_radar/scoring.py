@@ -6,7 +6,9 @@ source's scale (HN points vs GitHub stars vs chart rank) dominates:
 - engagement: how much attention matching signals got (log-damped, so one viral
   post doesn't swamp many solid ones)
 - volume:     how many distinct signals mention the concept
-- momentum:   recent half of the window vs the older half (is it accelerating?),
+- momentum:   recent half of the window vs the older half, divided by the same
+              ratio for all posts (so 1.0 = growing as fast as the source overall;
+              a source that simply has more recent posts doesn't lift everything),
               from sources that cover the whole window; None with too few posts
 - intent:     how many signals are explicit asks ("is there an app", "I'd pay")
 - diversity:  how many independent sources agree
@@ -45,16 +47,17 @@ NO_MOMENTUM_SOURCES = {"producthunt", "appstore", "googletrends", "github"}
 MIN_MOMENTUM_POSTS = 5
 
 
-def _momentum(signals: list[Signal], now: datetime, days: int) -> float | None:
-    """Ratio of recent to older activity, smoothed. >1 means growing; None if too little data."""
+MOMENTUM_PRIOR = 10.0  # pseudo-weight (~2 posts) pulling small concepts toward "no change"
+
+
+def _recent_older(signals: list[Signal], now: datetime, days: int) -> tuple[float, float, int]:
+    """Engagement-weighted activity in the recent and older halves of the window."""
     mid = now - timedelta(days=days / 2)
     start = now - timedelta(days=days)
     dated = [
         s for s in signals
         if s.created_at is not None and s.created_at >= start and s.source not in NO_MOMENTUM_SOURCES
     ]
-    if len(dated) < MIN_MOMENTUM_POSTS:
-        return None
     recent = older = 0.0
     for s in dated:
         weight = 1 + math.log1p(s.engagement)
@@ -62,8 +65,28 @@ def _momentum(signals: list[Signal], now: datetime, days: int) -> float | None:
             recent += weight
         else:
             older += weight
-    # +2 smoothing keeps tiny concepts (1 post vs 0) from looking explosive.
-    return (recent + 2) / (older + 2)
+    return recent, older, len(dated)
+
+
+def _momentum(signals: list[Signal], now: datetime, days: int, baseline: float = 0.5) -> float | None:
+    """Odds that activity is recent, relative to `baseline` (the population's recent share).
+
+    1.0 means the concept's activity is as recent as everything else's; 2.0 means
+    twice the odds of being recent (gaining share). None if too few posts.
+    """
+    recent, older, n = _recent_older(signals, now, days)
+    if n < MIN_MOMENTUM_POSTS:
+        return None
+    # Smooth toward the baseline so a 2-post concept can't look explosive.
+    odds = (recent + MOMENTUM_PRIOR * baseline) / (older + MOMENTUM_PRIOR * (1 - baseline))
+    return odds / (baseline / (1 - baseline))
+
+
+def _recent_share(signals: list[Signal], now: datetime, days: int) -> float | None:
+    recent, older, n = _recent_older(signals, now, days)
+    if n < MIN_MOMENTUM_POSTS or recent == 0 or older == 0:
+        return None
+    return recent / (recent + older)
 
 
 def _search_growth(series: list[Signal], now: datetime, days: int) -> float | None:
@@ -80,6 +103,23 @@ def _search_growth(series: list[Signal], now: datetime, days: int) -> float | No
         return None
     # +1 smoothing so a term going from ~0 to 2 doesn't read as infinite growth.
     return (sum(recent) / len(recent) + 1) / (sum(older) / len(older) + 1)
+
+
+def _examples(signals: list[Signal], n: int) -> list[Signal]:
+    """Top posts, interleaved across sources so GitHub star counts don't crowd out HN posts."""
+    def rank(s: Signal) -> tuple:
+        return (has_intent(s), s.engagement + s.comments)
+
+    by_source: dict[str, list[Signal]] = {}
+    for s in sorted(signals, key=rank, reverse=True):
+        by_source.setdefault(s.source, []).append(s)
+    queues = sorted(by_source.values(), key=lambda q: rank(q[0]), reverse=True)
+    out: list[Signal] = []
+    while len(out) < n and any(queues):
+        for q in queues:
+            if q and len(out) < n:
+                out.append(q.pop(0))
+    return out
 
 
 def _percentiles(values: list[float]) -> list[float]:
@@ -108,7 +148,10 @@ def score_concepts(
     weights: dict[str, float] | None = None,
     min_volume: int = 2,
     examples: int = 5,
+    population: list[Signal] | None = None,
 ) -> list[ConceptScore]:
+    """Score each bucket. `population` (all collected signals) sets the momentum
+    baseline; by default it's every post across the buckets."""
     now = now or datetime.now(timezone.utc)
     weights = weights or DEFAULT_WEIGHTS
     concepts, series = [], []
@@ -120,7 +163,12 @@ def score_concepts(
     if not concepts:
         return []
     growth = [_search_growth(s, now, days) for s in series]
-    momentum = [_momentum(s, now, days) for _, s in concepts]
+    if population is None:
+        population = list({(s.source, s.url, s.title): s for _, sigs in concepts for s in sigs}.values())
+    baseline = _recent_share([s for s in population if s.series_for is None], now, days)
+    momentum = [
+        None if baseline is None else _momentum(s, now, days, baseline) for _, s in concepts
+    ]
 
     raw = {
         "engagement": [_engagement(s) for _, s in concepts],
@@ -142,7 +190,6 @@ def score_concepts(
     results = []
     for i, (concept, sigs) in enumerate(concepts):
         score = 100 * sum(weights[k] * pct[k][i] for k in weights) / total_w
-        top = sorted(sigs, key=lambda s: (has_intent(s), s.engagement + s.comments), reverse=True)
         results.append(
             ConceptScore(
                 concept=concept,
@@ -154,7 +201,7 @@ def score_concepts(
                 diversity=int(raw["diversity"][i]),
                 search_growth=None if growth[i] is None else round(growth[i], 2),
                 sources=sorted({s.source for s in sigs}),
-                examples=top[:examples],
+                examples=_examples(sigs, examples),
             )
         )
     results.sort(key=lambda r: r.score, reverse=True)

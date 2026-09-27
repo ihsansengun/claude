@@ -59,14 +59,16 @@ def analyze(
     cluster_threshold: float | None = None,
 ):
     taxonomy = load_taxonomy(taxonomy_path)
-    concepts = score_concepts(assign_concepts(signals, taxonomy), days=days, now=now)
+    concepts = score_concepts(assign_concepts(signals, taxonomy), days=days, now=now, population=signals)
     if cluster == "off":
-        phrases = score_concepts(emergent_phrases(signals), days=days, now=now, min_volume=3, examples=3)
+        phrases = score_concepts(emergent_phrases(signals), days=days, now=now, min_volume=3, examples=3,
+                                 population=signals)
     else:
         # Cluster a wider candidate pool than we display; merging shrinks it.
         themes = cluster_phrases(emergent_phrases(signals, top=150), taxonomy, method=cluster, threshold=cluster_threshold)
         by_label = {t.label: t for t in themes}
-        phrases = score_concepts({t.label: t.signals for t in themes}, days=days, now=now, min_volume=3, examples=3)
+        phrases = score_concepts({t.label: t.signals for t in themes}, days=days, now=now, min_volume=3, examples=3,
+                                 population=signals)
         for p in phrases:
             p.aliases, p.fits = by_label[p.concept].aliases, by_label[p.concept].fits
     asks = sorted((s for s in signals if has_intent(s)), key=lambda s: s.engagement + s.comments, reverse=True)[:top]

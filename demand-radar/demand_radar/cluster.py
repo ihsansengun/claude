@@ -26,7 +26,7 @@ import re
 from collections import Counter
 from dataclasses import dataclass, field
 
-from .extract import STOPWORDS, tokens
+from .extract import STOPWORDS, concept_text, tokens
 from .models import Signal
 
 DEFAULT_THRESHOLDS = {"tfidf": 0.35, "sbert": 0.55}
@@ -87,7 +87,7 @@ def _key(s: Signal) -> tuple:
 
 
 def _category_profile(signals: list[Signal], taxonomy: dict[str, re.Pattern]) -> dict[str, float]:
-    return _normalize(dict(Counter(c for s in signals for c, pat in taxonomy.items() if pat.search(s.body))))
+    return _normalize(dict(Counter(c for s in signals for c, pat in taxonomy.items() if pat.search(concept_text(s)))))
 
 
 def tfidf_similarity(items: list[tuple[str, list[Signal]]], taxonomy: dict[str, re.Pattern]) -> list[list[float]]:
@@ -163,7 +163,7 @@ def agglomerate(sim: list[list[float]], threshold: float) -> list[list[int]]:
 
 
 def _fit(signals: list[Signal], taxonomy: dict[str, re.Pattern]) -> tuple[str | None, float]:
-    counts = Counter(c for s in signals for c, pat in taxonomy.items() if pat.search(s.body))
+    counts = Counter(c for s in signals for c, pat in taxonomy.items() if pat.search(concept_text(s)))
     if not counts:
         return None, 0.0
     concept, hits = counts.most_common(1)[0]

@@ -48,8 +48,8 @@ def to_markdown(
         "Score is 0-100: a weighted percentile blend of engagement, volume, momentum, "
         "explicit asks (\"is there an app…\", \"I'd pay…\"), cross-source agreement, "
         "and Google search-interest growth when available. "
-        "Trend compares the two halves of the window using only sources that span it "
-        "(HN, Reddit); — means too few posts to tell.",
+        "Trend compares the two halves of the window against the same sources overall "
+        "(HN, Reddit), so 'rising' means gaining share; — means too few posts to tell.",
     ]
     if concepts and all(c.search_growth is None for c in concepts):
         out += [

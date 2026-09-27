@@ -32,7 +32,7 @@ sources ──► signals ──► concepts ──► scores ──► report
    | Product Hunt feed | recent launches | none (counts toward volume) |
    | Google Trends | trending searches, plus search-interest growth for each concept | approx. search volume; growth feeds the **search** component |
 
-2. **Map signals to concepts** (`extract.py`) in two ways:
+2. **Map signals to concepts** (`extract.py`) in two ways. For HN, Reddit and Google Trends, only the title is matched, because long post bodies and attached news headlines mention too much in passing:
    - **Taxonomy:** about 45 app categories in `taxonomy.json`, each defined by keyword phrases. You can edit the file or pass your own with `--taxonomy`.
    - **Emerging themes:** 2–3 word phrases that recur across titles, clustered by meaning (`cluster.py`). One idea is often phrased many ways ("habit tracker", "habit tracking", "daily streak"), so similar phrases merge into one theme and their posts are pooled. Each theme is linked to the taxonomy category most of its posts match. A theme with no matching category is marked **new**, which makes it a candidate niche.
 
@@ -44,7 +44,7 @@ sources ──► signals ──► concepts ──► scores ──► report
    |---|---:|---|
    | engagement | 0.30 | log-damped attention on matching signals |
    | intent | 0.25 | number of explicit asks |
-   | momentum | 0.20 | activity in the recent half of the window vs the older half |
+   | momentum | 0.20 | whether the concept is gaining share: its recent-vs-older activity compared with all posts from the same sources. Only uses sources that span the whole window (HN, Reddit), and needs 5+ posts |
    | volume | 0.15 | number of distinct signals |
    | diversity | 0.10 | number of independent sources that agree |
    | search | 0.15 | Google search interest in the recent half vs the older half (only when Trends data was collected) |
