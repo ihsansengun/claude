@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:ht="https://trends.google.com/trending/rss" version="2.0">
+  <channel>
+    <title>Daily Search Trends</title>
+    <item>
+      <title>ozempic calorie tracker</title>
+      <ht:approx_traffic>2,000+</ht:approx_traffic>
+      <pubDate>Sat, 26 Sep 2026 10:00:00 -0700</pubDate>
+      <ht:news_item><ht:news_item_title>New apps pair GLP-1 users with nutrition coaching</ht:news_item_title></ht:news_item>
+    </item>
+    <item>
+      <title>world series</title>
+      <ht:approx_traffic>1M+</ht:approx_traffic>
+      <pubDate>Sat, 26 Sep 2026 12:00:00 -0700</pubDate>
+    </item>
+  </channel>
+</rss>

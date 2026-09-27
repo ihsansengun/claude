@@ -9,6 +9,8 @@ source's scale (HN points vs GitHub stars vs chart rank) dominates:
 - momentum:   recent half of the window vs the older half (is it accelerating?)
 - intent:     how many signals are explicit asks ("is there an app", "I'd pay")
 - diversity:  how many independent sources agree
+- search:     growth in search interest (Google Trends), recent half vs older
+              half; only used when search series were collected
 
 The final score is a weighted sum scaled to 0-100.
 """
@@ -21,7 +23,14 @@ from datetime import datetime, timedelta, timezone
 from .extract import has_intent
 from .models import ConceptScore, Signal
 
-DEFAULT_WEIGHTS = {"engagement": 0.30, "volume": 0.15, "momentum": 0.20, "intent": 0.25, "diversity": 0.10}
+DEFAULT_WEIGHTS = {
+    "engagement": 0.30,
+    "volume": 0.15,
+    "momentum": 0.20,
+    "intent": 0.25,
+    "diversity": 0.10,
+    "search": 0.15,
+}
 
 
 def _engagement(signals: list[Signal]) -> float:
@@ -43,6 +52,22 @@ def _momentum(signals: list[Signal], now: datetime, days: int) -> float:
             older += weight
     # +2 smoothing keeps tiny concepts (1 post vs 0) from looking explosive.
     return (recent + 2) / (older + 2)
+
+
+def _search_growth(series: list[Signal], now: datetime, days: int) -> float | None:
+    """Mean search interest in the recent half of the window over the older half.
+
+    Trends values are 0-100 relative to each term's own peak, so only a term's
+    change over time is meaningful, not its level.
+    """
+    mid = now - timedelta(days=days / 2)
+    start = now - timedelta(days=days)
+    recent = [s.engagement for s in series if s.created_at and s.created_at >= mid]
+    older = [s.engagement for s in series if s.created_at and start <= s.created_at < mid]
+    if not recent or not older:
+        return None
+    # +1 smoothing so a term going from ~0 to 2 doesn't read as infinite growth.
+    return (sum(recent) / len(recent) + 1) / (sum(older) / len(older) + 1)
 
 
 def _percentiles(values: list[float]) -> list[float]:
@@ -74,9 +99,15 @@ def score_concepts(
 ) -> list[ConceptScore]:
     now = now or datetime.now(timezone.utc)
     weights = weights or DEFAULT_WEIGHTS
-    concepts = [(c, sigs) for c, sigs in buckets.items() if len(sigs) >= min_volume]
+    concepts, series = [], []
+    for c, sigs in buckets.items():
+        posts = [s for s in sigs if s.series_for is None]
+        if len(posts) >= min_volume:
+            concepts.append((c, posts))
+            series.append([s for s in sigs if s.series_for is not None])
     if not concepts:
         return []
+    growth = [_search_growth(s, now, days) for s in series]
 
     raw = {
         "engagement": [_engagement(s) for _, s in concepts],
@@ -84,7 +115,11 @@ def score_concepts(
         "momentum": [_momentum(s, now, days) for _, s in concepts],
         "intent": [float(sum(has_intent(x) for x in s)) for _, s in concepts],
         "diversity": [float(len({x.source for x in s})) for _, s in concepts],
+        # Concepts without search data sit at neutral (no growth) rather than bottom.
+        "search": [1.0 if g is None else g for g in growth],
     }
+    if all(g is None for g in growth):
+        weights = {k: w for k, w in weights.items() if k != "search"}
     pct = {k: _percentiles(v) for k, v in raw.items()}
     total_w = sum(weights.values())
 
@@ -101,6 +136,7 @@ def score_concepts(
                 momentum=round(raw["momentum"][i], 2),
                 intent=int(raw["intent"][i]),
                 diversity=int(raw["diversity"][i]),
+                search_growth=None if growth[i] is None else round(growth[i], 2),
                 sources=sorted({s.source for s in sigs}),
                 examples=top[:examples],
             )

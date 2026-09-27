@@ -64,7 +64,9 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     concepts, phrases, asks = analyze(signals, days=args.days, taxonomy_path=args.taxonomy, now=now, top=args.top)
-    meta = dict(days=args.days, total_signals=len(signals), sources=sources, generated_at=now)
+    # Search-series points are measurements, not posts; don't count them as signals.
+    posts = sum(s.series_for is None for s in signals)
+    meta = dict(days=args.days, total_signals=posts, sources=sources, generated_at=now)
     md = to_markdown(concepts, phrases, asks, top=args.top, **meta)
     if args.out:
         args.out.write_text(md)

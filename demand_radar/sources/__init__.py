@@ -1,3 +1,3 @@
-from . import appstore, github, hackernews, producthunt, reddit
+from . import appstore, github, googletrends, hackernews, producthunt, reddit
 
-REGISTRY = {m.NAME: m for m in (hackernews, reddit, github, appstore, producthunt)}
+REGISTRY = {m.NAME: m for m in (hackernews, reddit, github, appstore, producthunt, googletrends)}

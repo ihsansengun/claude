@@ -45,17 +45,19 @@ def to_markdown(
         f"{total_signals} signals from {', '.join(sources) or 'no sources'}",
         "",
         "Score is 0-100: a weighted percentile blend of engagement, volume, momentum, "
-        "explicit asks (\"is there an app…\", \"I'd pay…\"), and cross-source agreement.",
+        "explicit asks (\"is there an app…\", \"I'd pay…\"), cross-source agreement, "
+        "and Google search-interest growth when available.",
         "",
         "## Top concepts",
         "",
-        "| # | Concept | Score | Signals | Asks | Sources | Trend |",
-        "|---|---------|------:|--------:|-----:|--------:|-------|",
+        "| # | Concept | Score | Signals | Asks | Sources | Trend | Search |",
+        "|---|---------|------:|--------:|-----:|--------:|-------|--------|",
     ]
     for i, c in enumerate(concepts[:top], 1):
+        search = "—" if c.search_growth is None else f"{_trend(c.search_growth)} ({c.search_growth:.2f}x)"
         out.append(
             f"| {i} | {c.concept} | {c.score} | {c.volume} | {c.intent} | {c.diversity} | "
-            f"{_trend(c.momentum)} ({c.momentum:.2f}x) |"
+            f"{_trend(c.momentum)} ({c.momentum:.2f}x) | {search} |"
         )
     out += ["", "## Evidence for the top concepts", ""]
     for c in concepts[: min(top, 10)]:

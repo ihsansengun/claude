@@ -8,8 +8,8 @@ from demand_radar.cli import main
 from demand_radar.extract import assign_concepts, emergent_phrases, has_intent, load_taxonomy
 from demand_radar.models import Signal
 from demand_radar.report import dump_signals, load_signals
-from demand_radar.scoring import _momentum, _percentiles, score_concepts
-from demand_radar.sources import appstore, github, hackernews, producthunt, reddit
+from demand_radar.scoring import DEFAULT_WEIGHTS, _momentum, _percentiles, _search_growth, score_concepts
+from demand_radar.sources import appstore, github, googletrends, hackernews, producthunt, reddit
 
 FIXTURES = Path(__file__).with_name("fixtures")
 NOW = datetime(2026, 9, 27, tzinfo=timezone.utc)
@@ -47,6 +47,27 @@ class SourceParsers(unittest.TestCase):
         self.assertEqual(out[0].title, "Nightowl")
         self.assertIn("sleep", out[0].text)
         self.assertNotIn("<p>", out[0].text)
+
+    def test_googletrends_trending_rss(self):
+        out = googletrends.parse_trending((FIXTURES / "trends_rss.xml").read_bytes())
+        self.assertEqual([s.engagement for s in out], [2000, 1_000_000])
+        self.assertIn("GLP-1", out[0].text)
+        self.assertEqual(out[0].created_at, datetime(2026, 9, 26, 17, tzinfo=timezone.utc))
+        self.assertIsNone(out[0].series_for)
+
+    def test_googletrends_interest_strips_prefix_and_partial(self):
+        payload = googletrends._strip_xssi((FIXTURES / "trends_multiline.txt").read_bytes())
+        out = googletrends.parse_interest(payload, "sleep app", "Sleep")
+        self.assertEqual([s.engagement for s in out], [40, 60, 100])  # partial week dropped
+        self.assertTrue(all(s.series_for == "Sleep" for s in out))
+
+    def test_googletrends_traffic_parsing(self):
+        self.assertEqual(googletrends._traffic("200+"), 200)
+        self.assertEqual(googletrends._traffic("10K+"), 10_000)
+        self.assertEqual(googletrends._traffic(None), 0)
+
+    def test_search_terms_match_taxonomy(self):
+        self.assertEqual(set(googletrends.load_terms()), set(load_taxonomy()))
 
 
 class Extraction(unittest.TestCase):
@@ -96,6 +117,38 @@ class Scoring(unittest.TestCase):
         self.assertEqual(ranked[0].intent, 2)
         self.assertEqual(ranked[0].diversity, 3)
         self.assertGreater(ranked[0].score, ranked[1].score)
+
+    def test_search_series_feeds_growth_not_volume(self):
+        def point(concept, days_ago, value):
+            return Signal("googletrends", "term", "u", NOW - timedelta(days=days_ago), "", value, series_for=concept)
+
+        posts = {c: [sig(f"{c} a", points=50), sig(f"{c} b", points=50)] for c in ("Up", "Down")}
+        buckets = {
+            "Up": posts["Up"] + [point("Up", 25, 20), point("Up", 5, 80)],
+            "Down": posts["Down"] + [point("Down", 25, 80), point("Down", 5, 20)],
+        }
+        ranked = {c.concept: c for c in score_concepts(buckets, days=30, now=NOW)}
+        self.assertEqual(ranked["Up"].volume, 2)  # series points aren't posts
+        self.assertEqual(ranked["Up"].sources, ["hackernews"])
+        self.assertGreater(ranked["Up"].search_growth, 1)
+        self.assertLess(ranked["Down"].search_growth, 1)
+        self.assertGreater(ranked["Up"].score, ranked["Down"].score)
+
+    def test_search_weight_dropped_without_series(self):
+        buckets = {"A": [sig("a", points=90), sig("a2", points=90)], "B": [sig("b", points=1), sig("b2", points=1)]}
+        ranked = score_concepts(buckets, days=30, now=NOW)
+        no_search = {k: w for k, w in DEFAULT_WEIGHTS.items() if k != "search"}
+        expected = score_concepts(buckets, days=30, now=NOW, weights=no_search)
+        # No search data anywhere: identical to scoring without the component.
+        self.assertEqual([c.score for c in ranked], [c.score for c in expected])
+        self.assertIsNone(ranked[0].search_growth)
+        self.assertIsNone(_search_growth([], NOW, 30))
+
+    def test_series_pinned_to_concept_and_ignored_by_phrases(self):
+        pts = [Signal("googletrends", "sleep app", "u", NOW - timedelta(days=i), "", 50, series_for="Sleep") for i in range(5)]
+        buckets = assign_concepts(pts, load_taxonomy())
+        self.assertEqual(list(buckets), ["Sleep"])  # not also keyword-matched elsewhere
+        self.assertEqual(emergent_phrases(pts, min_support=3), {})
 
     def test_min_volume_filters_singletons(self):
         self.assertEqual(score_concepts({"Lonely": [sig("x")]}, days=30, now=NOW), [])

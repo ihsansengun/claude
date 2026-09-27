@@ -24,6 +24,9 @@ class Signal:
     comments: float = 0.0
     # Rank on a chart (1 = top); only set by chart-style sources.
     rank: int | None = None
+    # Set on search-interest time-series points (e.g. Google Trends): the concept
+    # this point measures. These feed search growth, not volume or engagement.
+    series_for: str | None = None
 
     @property
     def body(self) -> str:
@@ -39,5 +42,7 @@ class ConceptScore:
     momentum: float
     intent: float
     diversity: int
+    # Recent vs older search interest; None when no search series covers the concept.
+    search_growth: float | None = None
     sources: list[str] = field(default_factory=list)
     examples: list[Signal] = field(default_factory=list)

@@ -27,6 +27,7 @@ sources ──► signals ──► concepts ──► scores ──► report
    | GitHub search | the most-starred repos created inside the window | stars + forks |
    | App Store top charts | what consumers are downloading right now (top free and top paid) | chart rank |
    | Product Hunt feed | recent launches | none (counts toward volume) |
+   | Google Trends | trending searches, plus search-interest growth for each concept | approx. search volume; growth feeds the **search** component |
 
 2. **Map signals to concepts** (`extract.py`) in two ways:
    - **Taxonomy:** about 45 app categories in `taxonomy.json`, each defined by keyword phrases. You can edit the file or pass your own with `--taxonomy`.
@@ -43,6 +44,9 @@ sources ──► signals ──► concepts ──► scores ──► report
    | momentum | 0.20 | activity in the recent half of the window vs the older half |
    | volume | 0.15 | number of distinct signals |
    | diversity | 0.10 | number of independent sources that agree |
+   | search | 0.15 | Google search interest in the recent half vs the older half (only when Trends data was collected) |
+
+   The weights are normalized, so when no Trends data is present, scoring is exactly what it would be without the search component.
 
 5. **Report** (`report.py`). The Markdown report has a ranked concept table, evidence links for each concept, emerging phrases and the top unmet asks. With `--json` it also writes the same data as JSON.
 
@@ -51,6 +55,7 @@ sources ──► signals ──► concepts ──► scores ──► report
 - Run it on a schedule with `--save-signals` so you build up a history.
 - To go deeper on one domain, point `--taxonomy` at a file of narrow sub-concepts (for example, only fitness app types).
 - Set `GITHUB_TOKEN` to raise GitHub's rate limit.
+- Google Trends checks one search term per concept, listed in `demand_radar/search_terms.json`. Trends values are relative to each term's own peak, so only a term's growth is scored, not its size. Choose terms that match how people actually search. Google rate-limits these requests heavily: requests are spaced 1.5s apart, and if Google starts refusing, the tool keeps the data it already has.
 - Reddit rate-limits anonymous clients. If it fails, run it again later or pass `--sources` without it. A failing source is skipped; it doesn't stop the run.
 
 ## Tests

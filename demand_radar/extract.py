@@ -63,9 +63,16 @@ def has_intent(signal: Signal) -> bool:
 
 
 def assign_concepts(signals: list[Signal], taxonomy: dict[str, re.Pattern]) -> dict[str, list[Signal]]:
-    """Map each concept to the signals that mention it. A signal can hit several concepts."""
+    """Map each concept to the signals that mention it. A signal can hit several concepts.
+
+    Search-series points are pinned to their concept instead of keyword-matched.
+    """
     buckets: dict[str, list[Signal]] = defaultdict(list)
     for sig in signals:
+        if sig.series_for is not None:
+            if sig.series_for in taxonomy:
+                buckets[sig.series_for].append(sig)
+            continue
         body = sig.body
         for concept, pattern in taxonomy.items():
             if pattern.search(body):
@@ -87,6 +94,8 @@ def emergent_phrases(signals: list[Signal], min_support: int = 3, top: int = 40)
     support: Counter[str] = Counter()
     members: dict[str, list[Signal]] = defaultdict(list)
     for sig in signals:
+        if sig.series_for is not None:
+            continue
         words = tokens(sig.title)
         grams = set()
         for n in (2, 3):
