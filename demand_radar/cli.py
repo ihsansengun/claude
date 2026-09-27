@@ -7,6 +7,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .cluster import BACKENDS, cluster_phrases
 from .extract import assign_concepts, emergent_phrases, has_intent, load_taxonomy
 from .models import Signal
 from .report import dump_signals, load_signals, to_json, to_markdown
@@ -26,9 +27,27 @@ def collect(names: list[str], days: int) -> list[Signal]:
     return signals
 
 
-def analyze(signals: list[Signal], *, days: int, taxonomy_path: Path | None, now: datetime, top: int):
-    concepts = score_concepts(assign_concepts(signals, load_taxonomy(taxonomy_path)), days=days, now=now)
-    phrases = score_concepts(emergent_phrases(signals), days=days, now=now, min_volume=3, examples=3)
+def analyze(
+    signals: list[Signal],
+    *,
+    days: int,
+    taxonomy_path: Path | None,
+    now: datetime,
+    top: int,
+    cluster: str = "tfidf",
+    cluster_threshold: float | None = None,
+):
+    taxonomy = load_taxonomy(taxonomy_path)
+    concepts = score_concepts(assign_concepts(signals, taxonomy), days=days, now=now)
+    if cluster == "off":
+        phrases = score_concepts(emergent_phrases(signals), days=days, now=now, min_volume=3, examples=3)
+    else:
+        # Cluster a wider candidate pool than we display; merging shrinks it.
+        themes = cluster_phrases(emergent_phrases(signals, top=150), taxonomy, method=cluster, threshold=cluster_threshold)
+        by_label = {t.label: t for t in themes}
+        phrases = score_concepts({t.label: t.signals for t in themes}, days=days, now=now, min_volume=3, examples=3)
+        for p in phrases:
+            p.aliases, p.fits = by_label[p.concept].aliases, by_label[p.concept].fits
     asks = sorted((s for s in signals if has_intent(s)), key=lambda s: s.engagement + s.comments, reverse=True)[:top]
     return concepts, phrases, asks
 
@@ -38,6 +57,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--days", type=int, default=30, help="look-back window in days (default 30)")
     p.add_argument("--sources", default=",".join(REGISTRY), help=f"comma-separated subset of: {', '.join(REGISTRY)}")
     p.add_argument("--taxonomy", type=Path, help="custom concept taxonomy JSON (default: bundled taxonomy.json)")
+    p.add_argument("--cluster", choices=[*BACKENDS, "off"], default="tfidf",
+                   help="merge similar emerging phrases into themes: tfidf (default, no deps), "
+                        "sbert (needs sentence-transformers), or off")
+    p.add_argument("--cluster-threshold", type=float,
+                   help="similarity needed to merge (default 0.35 tfidf / 0.55 sbert; higher = tighter themes)")
     p.add_argument("--top", type=int, default=20, help="rows per section (default 20)")
     p.add_argument("--out", type=Path, help="write Markdown report here (default: stdout)")
     p.add_argument("--json", type=Path, help="also write machine-readable results here")
@@ -63,11 +87,14 @@ def main(argv: list[str] | None = None) -> int:
         print("No signals collected; nothing to analyze.", file=sys.stderr)
         return 1
 
-    concepts, phrases, asks = analyze(signals, days=args.days, taxonomy_path=args.taxonomy, now=now, top=args.top)
+    concepts, phrases, asks = analyze(
+        signals, days=args.days, taxonomy_path=args.taxonomy, now=now, top=args.top,
+        cluster=args.cluster, cluster_threshold=args.cluster_threshold,
+    )
     # Search-series points are measurements, not posts; don't count them as signals.
     posts = sum(s.series_for is None for s in signals)
     meta = dict(days=args.days, total_signals=posts, sources=sources, generated_at=now)
-    md = to_markdown(concepts, phrases, asks, top=args.top, **meta)
+    md = to_markdown(concepts, phrases, asks, top=args.top, themed=args.cluster != "off", **meta)
     if args.out:
         args.out.write_text(md)
         print(f"Wrote {args.out}", file=sys.stderr)

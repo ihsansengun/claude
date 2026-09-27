@@ -37,6 +37,7 @@ def to_markdown(
     sources: list[str],
     generated_at: datetime,
     top: int = 20,
+    themed: bool = False,
 ) -> str:
     out = [
         "# Demand Radar report",
@@ -65,7 +66,24 @@ def to_markdown(
         out += [_signal_line(s) for s in c.examples]
         out.append("")
 
-    if phrases:
+    if phrases and themed:
+        out += [
+            "## Emerging themes",
+            "",
+            "Recurring phrases from titles, clustered by meaning and independent of the taxonomy. "
+            "**new** marks themes that no taxonomy category covers: candidate niches.",
+            "",
+            "| Theme | Also phrased as | Score | Signals | Asks | Sources | Category |",
+            "|-------|-----------------|------:|--------:|-----:|--------:|----------|",
+        ]
+        for p in phrases[:top]:
+            aka = ", ".join(p.aliases[:4]) + (f" (+{len(p.aliases) - 4})" if len(p.aliases) > 4 else "")
+            out.append(
+                f"| {p.concept} | {aka or '—'} | {p.score} | {p.volume} | {p.intent} | {p.diversity} | "
+                f"{p.fits or '**new**'} |"
+            )
+        out.append("")
+    elif phrases:
         out += [
             "## Emerging phrases",
             "",

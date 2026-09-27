@@ -4,7 +4,11 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import sys
+import types
+
 from demand_radar.cli import main
+from demand_radar.cluster import agglomerate, cluster_phrases
 from demand_radar.extract import assign_concepts, emergent_phrases, has_intent, load_taxonomy
 from demand_radar.models import Signal
 from demand_radar.report import dump_signals, load_signals
@@ -154,6 +158,65 @@ class Scoring(unittest.TestCase):
         self.assertEqual(score_concepts({"Lonely": [sig("x")]}, days=30, now=NOW), [])
 
 
+class Clustering(unittest.TestCase):
+    def setUp(self):
+        from cluster_corpus import S
+
+        self.phrases = emergent_phrases(S, min_support=2, top=150)
+        self.tax = load_taxonomy()
+
+    def test_agglomerate_average_linkage(self):
+        sim = [
+            [1.0, 0.9, 0.1, 0.0],
+            [0.9, 1.0, 0.2, 0.0],
+            [0.1, 0.2, 1.0, 0.8],
+            [0.0, 0.0, 0.8, 1.0],
+        ]
+        self.assertEqual(sorted(map(sorted, agglomerate(sim, 0.5))), [[0, 1], [2, 3]])
+        self.assertEqual(len(agglomerate(sim, 0.95)), 4)
+        # avg link between {0,1} and {2,3} is 0.075: only a very low threshold joins them.
+        self.assertEqual(len(agglomerate(sim, 0.05)), 1)
+
+    def test_merges_paraphrases_across_wording(self):
+        themes = {t.label: t for t in cluster_phrases(self.phrases, self.tax)}
+        self.assertIn("daily streak", themes["habit tracker"].aliases)
+        self.assertTrue({"calorie counter", "food photo"} <= set(themes["macro tracker"].aliases))
+        self.assertIn("meeting transcription", themes["meeting notes"].aliases)
+        self.assertEqual(themes["doomscrolling blocker"].fits, "Screen time & digital wellbeing")
+
+    def test_unrelated_ideas_stay_apart_and_new_niche_flagged(self):
+        themes = cluster_phrases(self.phrases, self.tax)
+        of = {p: t.label for t in themes for p in t.phrases}
+        self.assertNotEqual(of["habit tracker"], of["meeting notes"])
+        self.assertNotEqual(of["macro tracker"], of["doomscrolling blocker"])
+        plants = next(t for t in themes if t.label == "plant watering")
+        self.assertIsNone(plants.fits)  # no taxonomy category covers it
+
+    def test_theme_signals_are_deduplicated(self):
+        for t in cluster_phrases(self.phrases, self.tax):
+            keys = [(s.source, s.url, s.title) for s in t.signals]
+            self.assertEqual(len(keys), len(set(keys)))
+
+    def test_sbert_backend_uses_embeddings(self):
+        class FakeModel:
+            def __init__(self, name):
+                pass
+
+            def encode(self, texts, normalize_embeddings=True):
+                # 2-d "embeddings": habit-ish texts point one way, everything else the other.
+                return [[1.0, 0.0] if ("habit" in t or "streak" in t) else [0.0, 1.0] for t in texts]
+
+        fake = types.ModuleType("sentence_transformers")
+        fake.SentenceTransformer = FakeModel
+        sys.modules["sentence_transformers"] = fake
+        try:
+            themes = cluster_phrases(self.phrases, self.tax, method="sbert", threshold=0.9)
+        finally:
+            del sys.modules["sentence_transformers"]
+        habit = next(t for t in themes if "habit tracker" in t.phrases)
+        self.assertEqual(set(habit.phrases), {"habit tracker", "habit tracking", "daily streak"})
+
+
 class EndToEnd(unittest.TestCase):
     def test_cli_from_saved_signals(self):
         now = datetime.now(timezone.utc)
@@ -176,6 +239,22 @@ class EndToEnd(unittest.TestCase):
         self.assertIn("Top unmet asks", report)
         self.assertEqual(data["concepts"][0]["concept"], "Habit & productivity tracking")
         self.assertEqual(data["total_signals"], 6)
+
+    def test_cli_cluster_on_and_off(self):
+        from cluster_corpus import S
+
+        with tempfile.TemporaryDirectory() as d:
+            src, md = Path(d, "s.json"), Path(d, "r.md")
+            src.write_text(dump_signals(S))
+            self.assertEqual(main(["--from-signals", str(src), "--out", str(md)]), 0)
+            themed = md.read_text()
+            self.assertEqual(main(["--from-signals", str(src), "--out", str(md), "--cluster", "off"]), 0)
+            plain = md.read_text()
+        self.assertIn("## Emerging themes", themed)
+        self.assertIn("| habit tracker | habit tracking, daily streak |", themed)
+        self.assertRegex(themed, r"\| plant watering \|.*\*\*new\*\* \|")
+        self.assertIn("## Emerging phrases", plain)
+        self.assertNotIn("## Emerging themes", plain)
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ python -m demand_radar --days 7 --out report.md --json report.json
 python -m demand_radar --sources hackernews,reddit --top 30
 python -m demand_radar --save-signals raw.json      # keep raw data for history or replay
 python -m demand_radar --from-signals raw.json      # re-analyze without fetching
+python -m demand_radar --cluster sbert              # true sentence embeddings (pip install sentence-transformers)
 ```
 
 ## How it works
@@ -31,7 +32,7 @@ sources ──► signals ──► concepts ──► scores ──► report
 
 2. **Map signals to concepts** (`extract.py`) in two ways:
    - **Taxonomy:** about 45 app categories in `taxonomy.json`, each defined by keyword phrases. You can edit the file or pass your own with `--taxonomy`.
-   - **Emerging phrases:** 2–3 word phrases that recur across titles. These catch niches the taxonomy doesn't name yet.
+   - **Emerging themes:** 2–3 word phrases that recur across titles, clustered by meaning (`cluster.py`). One idea is often phrased many ways ("habit tracker", "habit tracking", "daily streak"), so similar phrases merge into one theme and their posts are pooled. Each theme is linked to the taxonomy category most of its posts match. A theme with no matching category is marked **new**, which makes it a candidate niche.
 
 3. **Detect explicit demand.** Phrases such as "is there an app", "I'd pay for", "wish someone would build" and "alternative to" mark a signal as an **ask**. An ask shows an unmet need, which is a stronger signal than general popularity.
 
@@ -48,7 +49,7 @@ sources ──► signals ──► concepts ──► scores ──► report
 
    The weights are normalized, so when no Trends data is present, scoring is exactly what it would be without the search component.
 
-5. **Report** (`report.py`). The Markdown report has a ranked concept table, evidence links for each concept, emerging phrases and the top unmet asks. With `--json` it also writes the same data as JSON.
+5. **Report** (`report.py`). The Markdown report has a ranked concept table, evidence links for each concept, emerging themes and the top unmet asks. With `--json` it also writes the same data as JSON.
 
 ## Tips
 
@@ -57,6 +58,16 @@ sources ──► signals ──► concepts ──► scores ──► report
 - Set `GITHUB_TOKEN` to raise GitHub's rate limit.
 - Google Trends checks one search term per concept, listed in `demand_radar/search_terms.json`. Trends values are relative to each term's own peak, so only a term's growth is scored, not its size. Choose terms that match how people actually search. Google rate-limits these requests heavily: requests are spaced 1.5s apart, and if Google starts refusing, the tool keeps the data it already has.
 - Reddit rate-limits anonymous clients. If it fails, run it again later or pass `--sources` without it. A failing source is skipped; it doesn't stop the run.
+
+## Clustering backends
+
+| `--cluster` | Needs | How similarity is measured |
+|---|---|---|
+| `tfidf` (default) | nothing | 40% shared words (stemmed), 20% similarity of the posts containing each phrase, 40% overlap in taxonomy categories. The category overlap is what joins synonyms like "calorie counter" and "food photo". Without it, this backend is mostly lexical. |
+| `sbert` | `pip install sentence-transformers` (downloads `all-MiniLM-L6-v2` on first use) | cosine similarity of sentence embeddings of each phrase plus its top post titles. This catches synonyms the taxonomy doesn't know. |
+| `off` | nothing | no clustering: the old flat phrase list |
+
+Phrases are merged with average-linkage clustering until no two groups are more similar than `--cluster-threshold` (defaults: 0.35 for tfidf, 0.55 for sbert). Raise the threshold for tighter themes; lower it for broader ones.
 
 ## Tests
 

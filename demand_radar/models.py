@@ -46,3 +46,7 @@ class ConceptScore:
     search_growth: float | None = None
     sources: list[str] = field(default_factory=list)
     examples: list[Signal] = field(default_factory=list)
+    # Set on clustered themes: other phrasings merged in, and the taxonomy concept
+    # the theme falls under (None = not covered by the taxonomy, i.e. a new niche).
+    aliases: list[str] = field(default_factory=list)
+    fits: str | None = None

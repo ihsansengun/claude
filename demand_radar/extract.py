@@ -37,7 +37,8 @@ STOPWORDS = set(
     make made using use used app apps tool tools show hn ask anyone looking need want like built build building
     one way free best better good great first help really also still even much many via based simple open source
     my i'm i've it's don't can't what's let's vs your you're day days week year time people thing things something
-    launch launched launching today introducing project side feedback idea ideas""".split()
+    launch launched launching today introducing project side feedback idea ideas i'd we'd pay wish please
+    actually alternative alternatives""".split()
 )
 _WORD_RE = re.compile(r"[a-z][a-z0-9+\-']*[a-z0-9+]|[a-z]")
 

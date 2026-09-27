@@ -96,7 +96,10 @@
     "macros",
     "food log*",
     "glp-1",
-    "ozempic"
+    "ozempic",
+    "macro tracker*",
+    "macro count*",
+    "protein"
   ],
   "Sleep": [
     "sleep*",
