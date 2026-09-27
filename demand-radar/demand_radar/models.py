@@ -39,7 +39,7 @@ class ConceptScore:
     score: float
     volume: int
     engagement: float
-    momentum: float
+    momentum: float | None  # None: too few posts spread over the window to tell
     intent: float
     diversity: int
     # Recent vs older search interest; None when no search series covers the concept.

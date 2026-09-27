@@ -6,7 +6,8 @@ source's scale (HN points vs GitHub stars vs chart rank) dominates:
 - engagement: how much attention matching signals got (log-damped, so one viral
   post doesn't swamp many solid ones)
 - volume:     how many distinct signals mention the concept
-- momentum:   recent half of the window vs the older half (is it accelerating?)
+- momentum:   recent half of the window vs the older half (is it accelerating?),
+              from sources that cover the whole window; None with too few posts
 - intent:     how many signals are explicit asks ("is there an app", "I'd pay")
 - diversity:  how many independent sources agree
 - search:     growth in search interest (Google Trends), recent half vs older
@@ -37,14 +38,25 @@ def _engagement(signals: list[Signal]) -> float:
     return sum(math.log1p(s.engagement) + 0.5 * math.log1p(s.comments) for s in signals)
 
 
-def _momentum(signals: list[Signal], now: datetime, days: int) -> float:
-    """Ratio of recent to older activity, smoothed. >1 means growing."""
+# Sources whose posts don't spread evenly over the window, so they'd fake a trend:
+# feeds/charts that only show the last few days (always "recent"), and GitHub,
+# where older repos have had longer to earn the stars needed to be listed.
+NO_MOMENTUM_SOURCES = {"producthunt", "appstore", "googletrends", "github"}
+MIN_MOMENTUM_POSTS = 5
+
+
+def _momentum(signals: list[Signal], now: datetime, days: int) -> float | None:
+    """Ratio of recent to older activity, smoothed. >1 means growing; None if too little data."""
     mid = now - timedelta(days=days / 2)
     start = now - timedelta(days=days)
+    dated = [
+        s for s in signals
+        if s.created_at is not None and s.created_at >= start and s.source not in NO_MOMENTUM_SOURCES
+    ]
+    if len(dated) < MIN_MOMENTUM_POSTS:
+        return None
     recent = older = 0.0
-    for s in signals:
-        if s.created_at is None or s.created_at < start:
-            continue
+    for s in dated:
         weight = 1 + math.log1p(s.engagement)
         if s.created_at >= mid:
             recent += weight
@@ -108,18 +120,22 @@ def score_concepts(
     if not concepts:
         return []
     growth = [_search_growth(s, now, days) for s in series]
+    momentum = [_momentum(s, now, days) for _, s in concepts]
 
     raw = {
         "engagement": [_engagement(s) for _, s in concepts],
         "volume": [float(len(s)) for _, s in concepts],
-        "momentum": [_momentum(s, now, days) for _, s in concepts],
+        # Unknown momentum/search sit at neutral (no change) rather than bottom.
+        "momentum": [1.0 if m is None else m for m in momentum],
         "intent": [float(sum(has_intent(x) for x in s)) for _, s in concepts],
         "diversity": [float(len({x.source for x in s})) for _, s in concepts],
-        # Concepts without search data sit at neutral (no growth) rather than bottom.
         "search": [1.0 if g is None else g for g in growth],
     }
+    # A component nobody has data for would only add noise; drop it.
     if all(g is None for g in growth):
         weights = {k: w for k, w in weights.items() if k != "search"}
+    if all(m is None for m in momentum):
+        weights = {k: w for k, w in weights.items() if k != "momentum"}
     pct = {k: _percentiles(v) for k, v in raw.items()}
     total_w = sum(weights.values())
 
@@ -133,7 +149,7 @@ def score_concepts(
                 score=round(score, 1),
                 volume=len(sigs),
                 engagement=round(raw["engagement"][i], 1),
-                momentum=round(raw["momentum"][i], 2),
+                momentum=None if momentum[i] is None else round(momentum[i], 2),
                 intent=int(raw["intent"][i]),
                 diversity=int(raw["diversity"][i]),
                 search_growth=None if growth[i] is None else round(growth[i], 2),

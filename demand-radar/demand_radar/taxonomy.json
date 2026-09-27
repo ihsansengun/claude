@@ -342,12 +342,16 @@
     "file shar*",
     "ocr",
     "e-sign*",
-    "signature*"
+    "e-signature*",
+    "sign documents"
   ],
   "Browsers & extensions": [
-    "browser",
-    "chrome extension",
-    "browser extension",
+    "browser extension*",
+    "chrome extension*",
+    "firefox extension*",
+    "safari extension*",
+    "web browser*",
+    "new browser",
     "tab manag*",
     "bookmark*"
   ],

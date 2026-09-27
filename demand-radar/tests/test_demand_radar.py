@@ -83,8 +83,25 @@ class Extraction(unittest.TestCase):
     def test_intent_phrases(self):
         self.assertTrue(has_intent(sig("Is there an app that tracks my houseplants?")))
         self.assertTrue(has_intent(sig("I'd pay for a calorie counter that works offline")))
-        self.assertTrue(has_intent(sig("Open-source alternative to Notion")))
+        self.assertTrue(has_intent(sig("Any good alternatives to Notion?")))
+        self.assertTrue(has_intent(sig("Is there an open-source alternative for Figma?")))
         self.assertFalse(has_intent(sig("Show HN: My weekend project")))
+
+    def test_launches_are_not_asks(self):
+        # Pitching an alternative is supply, not demand.
+        self.assertFalse(has_intent(sig("Open-source alternative to Notion")))
+        self.assertFalse(has_intent(sig("Show HN: I'd pay for this, so I built it")))
+        self.assertFalse(has_intent(sig("Launch HN: Acme (YC S26), is there an app for that? Now there is")))
+        self.assertFalse(has_intent(sig("Is there an app for X?", source="github")))
+        self.assertFalse(has_intent(sig("Is there an app for X?", source="producthunt")))
+        self.assertTrue(has_intent(sig("Ask HN: Is there an app for X?")))
+
+    def test_browser_keyword_needs_context(self):
+        buckets = assign_concepts(
+            [sig("Show HN: A Postgres client that runs in your browser"), sig("Chrome extension to mute tabs")],
+            load_taxonomy(),
+        )
+        self.assertEqual(len(buckets["Browsers & extensions"]), 1)
 
     def test_taxonomy_word_boundaries(self):
         tax = load_taxonomy()
@@ -109,10 +126,19 @@ class Scoring(unittest.TestCase):
         self.assertEqual(_percentiles([1, 1, 3]), [0.25, 0.25, 1.0])
 
     def test_momentum_rising_vs_cooling(self):
-        rising = [sig("x", days_ago=2), sig("x", days_ago=3), sig("x", days_ago=4)]
-        cooling = [sig("x", days_ago=25), sig("x", days_ago=26), sig("x", days_ago=27)]
+        rising = [sig("x", days_ago=d) for d in (1, 2, 3, 4, 20)]
+        cooling = [sig("x", days_ago=d) for d in (5, 25, 26, 27, 28)]
         self.assertGreater(_momentum(rising, NOW, 30), 1)
         self.assertLess(_momentum(cooling, NOW, 30), 1)
+
+    def test_momentum_unknown_with_few_posts(self):
+        self.assertIsNone(_momentum([sig("x", days_ago=d) for d in (1, 2, 3)], NOW, 30))
+
+    def test_recent_only_feeds_dont_fake_momentum(self):
+        # Product Hunt / charts only list the last few days; they must not read as "rising".
+        hn = [sig("x", days_ago=d) for d in (3, 8, 18, 22, 26, 28)]
+        ph = [sig("x", "producthunt", days_ago=1) for _ in range(20)]
+        self.assertAlmostEqual(_momentum(hn + ph, NOW, 30), _momentum(hn, NOW, 30))
 
     def test_demanded_concept_outranks_quiet_one(self):
         hot = [

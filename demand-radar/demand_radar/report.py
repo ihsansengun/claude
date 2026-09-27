@@ -47,7 +47,17 @@ def to_markdown(
         "",
         "Score is 0-100: a weighted percentile blend of engagement, volume, momentum, "
         "explicit asks (\"is there an app…\", \"I'd pay…\"), cross-source agreement, "
-        "and Google search-interest growth when available.",
+        "and Google search-interest growth when available. "
+        "Trend compares the two halves of the window using only sources that span it "
+        "(HN, Reddit); — means too few posts to tell.",
+    ]
+    if concepts and all(c.search_growth is None for c in concepts):
+        out += [
+            "",
+            "_No Google Trends search-interest data this run (skipped, rate limited, or failed; "
+            "see the terminal output), so Search is left out of the scores._",
+        ]
+    out += [
         "",
         "## Top concepts",
         "",
@@ -56,9 +66,10 @@ def to_markdown(
     ]
     for i, c in enumerate(concepts[:top], 1):
         search = "—" if c.search_growth is None else f"{_trend(c.search_growth)} ({c.search_growth:.2f}x)"
+        trend = "—" if c.momentum is None else f"{_trend(c.momentum)} ({c.momentum:.2f}x)"
         out.append(
             f"| {i} | {c.concept} | {c.score} | {c.volume} | {c.intent} | {c.diversity} | "
-            f"{_trend(c.momentum)} ({c.momentum:.2f}x) | {search} |"
+            f"{trend} | {search} |"
         )
     out += ["", "## Evidence for the top concepts", ""]
     for c in concepts[: min(top, 10)]:

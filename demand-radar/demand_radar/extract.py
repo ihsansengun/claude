@@ -20,8 +20,9 @@ INTENT_PATTERNS = [
     r"\b(?:i )?wish (?:there (?:was|were)|someone (?:would )?(?:made|built|make|build))\b",
     r"\bsomebody (?:should )?make\b",
     r"\blooking for (?:an?|some) (?:app|tool|service|alternative)\b",
-    r"\b(?:any|good|better|cheaper|open[- ]source) alternatives? (?:to|for)\b",
-    r"\balternative to\b",
+    # Only *asking* for an alternative; a bare "alternative to X" is usually a launch pitch.
+    r"\b(?:any|good|better|cheaper) alternatives? (?:to|for)\b",
+    r"\b(?:is there|know of|recommend) an? (?:[\w-]+ )?alternative\b",
     r"\bneed (?:an?|some) (?:app|tool)\b",
     r"\bwhy (?:is there no|isn't there an?)\b",
     r"\bfrustrat(?:ed|ing)\b|\bhate (?:using|that)\b",
@@ -59,7 +60,15 @@ def load_taxonomy(path: Path | None = None) -> dict[str, re.Pattern]:
     return compiled
 
 
+# Sources that list things people *made* (supply), never requests for something.
+SUPPLY_SOURCES = {"github", "producthunt", "appstore", "googletrends"}
+_LAUNCH_RE = re.compile(r"^\s*(?:show|launch) hn\b", re.IGNORECASE)
+
+
 def has_intent(signal: Signal) -> bool:
+    """True when the post asks for a product, rather than launching one."""
+    if signal.source in SUPPLY_SOURCES or _LAUNCH_RE.match(signal.title):
+        return False
     return bool(_INTENT_RE.search(signal.body))
 
 
