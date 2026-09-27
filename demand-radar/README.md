@@ -76,7 +76,7 @@ Phrases are merged with average-linkage clustering until no two groups are more 
 - **Python from python.org:** run `open "/Applications/Python 3.X/Install Certificates.command"`, using your version number.
 - **Work network, VPN or security software that inspects HTTPS:** export your company's root certificate and run `export SSL_CERT_FILE=/path/to/root.pem`.
 
-**Reddit: `403 Blocked`.** Reddit blocks most scripts that aren't logged in. Use its free official API instead:
+**Reddit.** Reddit is skipped unless API keys are set, because it blocks scripts that aren't logged in. To enable it (Reddit may first ask you to register as a developer):
 1. Open https://www.reddit.com/prefs/apps and click **create another app…**
 2. Choose **script**, give it any name, and set the redirect uri to `http://localhost:8080`.
 3. Copy the id shown under the app name and the **secret**, then run:

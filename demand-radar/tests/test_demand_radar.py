@@ -12,7 +12,7 @@ import types
 from unittest import mock
 
 from demand_radar import http
-from demand_radar.cli import collect, main
+from demand_radar.cli import collect, default_sources, main
 from demand_radar.cluster import agglomerate, cluster_phrases
 from demand_radar.extract import assign_concepts, emergent_phrases, has_intent, load_taxonomy
 from demand_radar.models import Signal
@@ -344,6 +344,13 @@ class RedditAuth(unittest.TestCase):
         with mock.patch.dict("os.environ", {}, clear=True), mock.patch.object(reddit, "get_json", blocked):
             with self.assertRaisesRegex(RuntimeError, "REDDIT_CLIENT_ID"):
                 reddit.fetch(30)
+
+    def test_reddit_skipped_by_default_without_credentials(self):
+        with mock.patch.dict("os.environ", {}, clear=True):
+            self.assertNotIn("reddit", default_sources())
+            self.assertIn("hackernews", default_sources())
+        with mock.patch.dict("os.environ", {"REDDIT_CLIENT_ID": "i", "REDDIT_CLIENT_SECRET": "s"}):
+            self.assertIn("reddit", default_sources())
 
     def test_anonymous_uses_public_json(self):
         urls = reddit.listing_urls(30, "https://www.reddit.com")

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -22,6 +23,13 @@ Every HTTPS request failed certificate verification. Usually one of:
   - A work network/VPN or security tool that inspects HTTPS. Point Python at
     its root certificate:  export SSL_CERT_FILE=/path/to/company-root.pem
 """
+
+
+def default_sources() -> list[str]:
+    """All sources, except Reddit unless API credentials are set (it blocks anonymous scripts)."""
+    if os.environ.get("REDDIT_CLIENT_ID") and os.environ.get("REDDIT_CLIENT_SECRET"):
+        return list(REGISTRY)
+    return [s for s in REGISTRY if s != "reddit"]
 
 
 def collect(names: list[str], days: int) -> list[Signal]:
@@ -68,7 +76,8 @@ def analyze(
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="demand_radar", description="Find popular, high-demand app concepts from public signals.")
     p.add_argument("--days", type=int, default=30, help="look-back window in days (default 30)")
-    p.add_argument("--sources", default=",".join(REGISTRY), help=f"comma-separated subset of: {', '.join(REGISTRY)}")
+    p.add_argument("--sources", help=f"comma-separated subset of: {', '.join(REGISTRY)} "
+                                     "(default: all; reddit only when REDDIT_CLIENT_ID/SECRET are set)")
     p.add_argument("--taxonomy", type=Path, help="custom concept taxonomy JSON (default: bundled taxonomy.json)")
     p.add_argument("--cluster", choices=[*BACKENDS, "off"], default="tfidf",
                    help="merge similar emerging phrases into themes: tfidf (default, no deps), "
@@ -89,7 +98,12 @@ def main(argv: list[str] | None = None) -> int:
         # Measure momentum relative to when the data was collected, not today.
         now = max((s.created_at for s in signals if s.created_at), default=now)
     else:
-        sources = [s.strip() for s in args.sources.split(",") if s.strip()]
+        if args.sources:
+            sources = [s.strip() for s in args.sources.split(",") if s.strip()]
+        else:
+            sources = default_sources()
+            if "reddit" not in sources:
+                print("Skipping reddit (no REDDIT_CLIENT_ID/REDDIT_CLIENT_SECRET; see README).", file=sys.stderr)
         if unknown := [s for s in sources if s not in REGISTRY]:
             p.error(f"unknown source(s): {', '.join(unknown)}")
         print(f"Collecting {args.days} days of signals...", file=sys.stderr)
