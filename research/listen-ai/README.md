@@ -166,6 +166,18 @@ How to make it a better bet:
 3. **Honest pricing as the hook:** annual plus monthly, a visible meter, unlimited on-device voices.
 4. **Test before scaling.** After the MVP, spend a small fixed ad budget (e.g. $2–5K) to measure cost per install, trial start rate, trial-to-paid rate and payback period. Set kill or scale thresholds in advance.
 
+## 7a. Featuring strategy (Apple / Google editorial)
+
+A dyslexia/ADHD or underserved-language focus helps featuring odds, but nothing guarantees it.
+
+- **Apple** takes Featuring Nominations in App Store Connect. The minimum lead time is 2 weeks; up to 3 months ahead is recommended, since editors plan collections 8–12 weeks out. Editors value accessibility work and the story behind it.
+- **Accessibility Nutrition Labels** on the App Store let us declare VoiceOver, Voice Control, Larger Text, Dark Interface, Differentiate Without Color, Sufficient Contrast, Reduced Motion, Captions and Audio Descriptions. We should support all the ones that apply: a reading-accessibility app with weak VoiceOver support would hurt credibility.
+- **Moments to aim for:** Global Accessibility Awareness Day (third Thursday of May), which is a realistic launch target, and Dyslexia and ADHD Awareness Months (October). Nominate about 3 months ahead.
+- **Google Play** has a Featuring Nomination form for new launches (roughly the first 120 days) that meet its quality, rating and localization bars.
+- **Local storefronts:** a strong native-language app in a smaller market faces less competition for local editorial slots.
+- **What hurts:** aggressive weekly paywalls and dark patterns (Listen AI's model) work against editorial picks. Honest pricing, native design and the latest OS features (App Intents/Shortcuts, Live Activities, widgets) help.
+- **Avoid medical claims.** Say "helps you read and focus", not "treats ADHD/dyslexia".
+
 ## 8. Open data gaps
 
 - Exact revenue and downloads (AppMagic logged-in; the logged-out view only shows "> $100K" / "> 100K")
