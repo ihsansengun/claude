@@ -139,9 +139,10 @@ TTS market: roughly $4.4B (2026), heading toward about $12.5B by 2031 (Mordor In
 **v2**: voice cloning (with consent flow), podcast generator, browser extension/web app,
 Readwise/Pocket/Kindle-highlights import.
 
-**Stack suggestion**: Flutter or React Native for both stores, RevenueCat for subscriptions,
-native modules for on-device TTS and OCR, and a thin backend that proxies cloud TTS and
-caches rendered audio per (document, voice, chunk).
+**Stack suggestion**: ~~Flutter or React Native for both stores~~. Superseded: the goal is now
+Apple featuring, so build native Swift/SwiftUI. See [apple-featuring-plan.md](apple-featuring-plan.md).
+Keep RevenueCat (or StoreKit 2) for subscriptions and a thin backend that proxies cloud TTS
+and caches rendered audio per (document, voice, chunk).
 
 ## 7. Verdict: is it worth building?
 
