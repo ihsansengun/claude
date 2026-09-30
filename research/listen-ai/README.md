@@ -2,9 +2,9 @@
 
 Target: `com.codespaceapps.listeningapp` (Google Play) / `id6502340091` (App Store).
 Compiled 2026-09-30 from search-engine snippets of Google Play, App Store, APK mirrors,
-Appllama and review sites. AppMagic, Google Play and the App Store could not be fetched
-directly from the research environment, so **revenue is missing** and some numbers
-below disagree across sources — ranges are given where they do.
+Appllama and review sites, plus an AppMagic screenshot (section 1a). Google Play and the
+App Store could not be fetched directly, so some numbers below disagree across sources;
+ranges are given where they do.
 
 ## 1. Snapshot
 
@@ -33,6 +33,23 @@ and about 20× fewer ratings. The iOS store is also full of copycats using the s
 (`id6743119800` by Vladyslav Kulykevych, `id6753171019`, `id6756644157`,
 "PDF Text to Speech：AI Listen", "ListenAloud"…). So there's still room on iOS, but only
 for a clearly better product with a different name. Another "Listen AI" won't stand out.
+
+## 1a. AppMagic (logged-out screenshot, 2026-09-30)
+
+AppMagic only shows buckets when you're logged out, so these are lower bounds.
+
+| Last 30 days | Value | Top countries |
+|---|---|---|
+| Revenue | **> $100,000** | 27% United States, then 7%, 4%, 4%, 3%, 3%, 3%, 49% others |
+| Downloads | **> 100,000** | 12% Argentina (truncated "Arg…"), 9%, 9%, 8%, 8%, 6%, 4%, 44% others |
+
+AppMagic lists the publisher under a Turkish flag (Deep Flow Software Services).
+
+How to read it:
+- The US brings 27% of revenue but under 12% of downloads, so a US user is worth several times the average user.
+- The top download country is Argentina, a low-price market. This looks like cheap paid installs in LATAM and emerging markets, with the money made in the US and other rich markets.
+- Revenue is spread across many countries (49% "others"), so localized voices and paywalls matter.
+- The lower bounds fit the search data (~190K Android + ~40K iOS downloads a month). Revenue is probably low-to-mid six figures a month, but the upper bound is unknown.
 
 ## 2. Feature inventory (what we must match)
 
@@ -126,10 +143,34 @@ Readwise/Pocket/Kindle-highlights import.
 native modules for on-device TTS and OCR, and a thin backend that proxies cloud TTS and
 caches rendered audio per (document, voice, chunk).
 
-## 7. Open data gaps
+## 7. Verdict: is it worth building?
 
-- Revenue / MRR (AppMagic page: open it logged in and paste the numbers here)
-- Country split of downloads and revenue
+**Yes, as a small, time-boxed bet aimed at the US on iOS first. Not as a straight clone.**
+
+Reasons to build:
+- Demand is proven: a two-year-old utility from a small studio makes > $100K a month, and Speechify and ElevenReader show the category supports much bigger players.
+- The incumbent is beatable on trust: most complaints are about hidden weekly pricing, a hidden cap and buggy playback. There's no technical moat.
+- Its iOS version is weak even though the US (where iOS monetizes best) is its biggest revenue market.
+- Build cost is low: TTS APIs, on-device voices and OCR are off the shelf, so an MVP takes weeks.
+- Voice costs keep falling, which makes an honest "unlimited on-device + metered premium" model workable.
+
+Risks:
+- **Distribution is the whole game.** Listen AI grows through paid installs and store search (ASO), not product quality. Without an ad budget or an organic channel (TikTok/short video, SEO, student communities), a better app still won't get found.
+- Free alternatives are getting good: ElevenReader gives 10 free hours a month with top voices, and Chrome, Android and iOS have built-in read-aloud. NotebookLM-style audio overviews cover the "podcast" use.
+- The store is crowded with look-alike "Listen AI" clones, so generic keywords are expensive.
+- Heavy listeners cost real money on cloud voices. Pricing has to cover them without a hidden cap.
+
+How to make it a better bet:
+1. **Pick a wedge.** For example, students and academic PDFs (clean extraction, citation skipping, summaries), dyslexia/ADHD, or a language where good voices are rare. Compete on that niche's keywords instead of "text to speech".
+2. **iOS first, US/English first**, then localize paywalls for the top revenue markets.
+3. **Honest pricing as the hook:** annual plus monthly, a visible meter, unlimited on-device voices.
+4. **Test before scaling.** After the MVP, spend a small fixed ad budget (e.g. $2–5K) to measure cost per install, trial start rate, trial-to-paid rate and payback period. Set kill or scale thresholds in advance.
+
+## 8. Open data gaps
+
+- Exact revenue and downloads (AppMagic logged-in; the logged-out view only shows "> $100K" / "> 100K")
+- Names of countries 2–7 in both splits (hover the bars in AppMagic)
+- Android vs iOS split (AppMagic "2 apps summary")
 - Exact paywall and onboarding flow (Appllama has the screenshots)
 - Which TTS provider they use (would need APK inspection)
 
