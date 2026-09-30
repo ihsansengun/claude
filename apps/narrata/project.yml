@@ -1,0 +1,84 @@
+# XcodeGen spec. On a Mac: `brew install xcodegen && cd apps/narrata && xcodegen`
+# then open Narrata.xcodeproj in Xcode 27.
+name: Narrata
+options:
+  bundleIdPrefix: com.yourcompany
+  deploymentTarget:
+    iOS: "27.0"
+  xcodeVersion: "27.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: ""   # set your team ID
+targets:
+  Narrata:
+    type: application
+    platform: iOS
+    sources:
+      - path: Narrata
+    info:
+      path: Narrata/Info.plist
+      properties:
+        CFBundleDisplayName: Narrata
+        UILaunchScreen: {}
+        UIBackgroundModes: [audio]
+        NSCameraUsageDescription: Narrata uses the camera to scan printed pages so it can read them aloud.
+        NSPhotoLibraryUsageDescription: Narrata reads text from photos of pages you choose.
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        ITSAppUsesNonExemptEncryption: false
+        LSSupportsOpeningDocumentsInPlace: true
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: PDF
+            LSHandlerRank: Alternate
+            LSItemContentTypes: [com.adobe.pdf]
+          - CFBundleTypeName: EPUB
+            LSHandlerRank: Alternate
+            LSItemContentTypes: [org.idpf.epub-container]
+          - CFBundleTypeName: Text
+            LSHandlerRank: Alternate
+            LSItemContentTypes: [public.plain-text]
+    entitlements:
+      path: Narrata/Narrata.entitlements
+      properties:
+        com.apple.developer.siri: true
+    dependencies:
+      - target: NarrataShare
+      - target: NarrataWidgets
+  NarrataShare:
+    type: app-extension
+    platform: iOS
+    sources: [NarrataShare]
+    info:
+      path: NarrataShare/Info.plist
+      properties:
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsWebURLWithMaxCount: 1
+              NSExtensionActivationSupportsText: true
+              NSExtensionActivationSupportsFileWithMaxCount: 1
+    entitlements:
+      path: NarrataShare/NarrataShare.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.yourcompany.narrata]
+  NarrataWidgets:
+    type: app-extension
+    platform: iOS
+    sources: [NarrataWidgets]
+    info:
+      path: NarrataWidgets/Info.plist
+      properties:
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+  NarrataTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [NarrataTests]
+    dependencies:
+      - target: Narrata

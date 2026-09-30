@@ -1,140 +1,110 @@
-# Plan: an iOS reading app built to get featured by Apple
+# Plan: ship a native iOS document-audio app in two weeks, aimed at the iOS 27 featuring wave
 
-**Goal:** get editorially featured on the App Store (a Today story, an accessibility/GAAD
-collection, or App of the Day). Stretch goal: Apple Design Award finalist, Inclusivity.
+Written 2026-09-30. Replaces the earlier GAAD-2027 plan, which assumed a 5-month build.
 
-**Target moment:** Global Accessibility Awareness Day, **Thursday 20 May 2027**.
-Nomination due by **~18 Feb 2027** (Apple recommends up to 3 months ahead; the minimum is 2 weeks).
+## 1. The bet in one paragraph
 
-This changes the earlier teardown (`README.md`) in two ways:
-- Build **native Swift/SwiftUI, iOS/iPadOS/macOS**, not Flutter or React Native. Editors reward apps that adopt the latest Apple technologies well, and cross-platform frameworks lag on that.
-- **Being featured comes first.** Pricing and design choices favour what editors reward over maximum short-term revenue.
+Build a native SwiftUI iPhone app that turns documents (PDF, EPUB, articles, photos of pages)
+into a listenable library with word highlighting, then submit it around **14 Oct 2026** with an
+App Store featuring nomination filed the same day. The pitch to editors: a new indie app that
+adopts the iOS 27 platform properly (Siri AI via App Schemas, Foundation Models with the free
+Private Cloud Compute model, Liquid Glass, Accessibility Nutrition Labels) and treats accessibility
+as core, with honest pricing. Featuring is a bonus (est. 10–20%); the reliable path is ASO plus
+a small paid test after launch.
 
----
+## 2. Featuring windows from today
 
-## 1. Concept
+| Window | Nomination type | Deadline | Notes |
+|---|---|---|---|
+| iOS 27 launch wave (OS shipped 14 Sep) | App Launch | file on submission day (2-week minimum lead) | editors run "updated for iOS 27 / works with Siri AI" collections for weeks after launch |
+| Dyslexia & ADHD Awareness Month (October) | New Content + In-App Event | ~14 Oct | tight; only if v1 is on the store by ~24 Oct |
+| Holiday / New Year collections | App Enhancement | late Oct–Nov | ship a 1.1 with one visible new feature |
+| GAAD, 20 May 2027 | App Enhancement | ~18 Feb 2027 | the accessibility showcase; plan a 2.0 for it |
 
-A reading companion for people with dyslexia and ADHD that reads text aloud and
-highlights it on screen at the same time. It turns any PDF, web page, photo of a page or
-note into text you can listen to and follow along with. Everything runs on-device and
-privately by default.
+Nomination write-up (App Store Connect → Featuring Nominations): what it is in one sentence;
+why now (iOS 27 adoption list); accessibility work and who tested it; privacy (on-device, no
+account); target storefronts; up to 5 supplemental URLs (press kit, demo video).
 
-Working name: TBD. Avoid "Listen AI"; the store has 5+ look-alikes.
+## 3. Positioning (do not compete with Apple's Accessibility Reader)
 
-Why this concept fits: Listen AI shows the demand (> $100K/month), and it is the
-opposite of what Apple features (weekly paywall, hidden caps, Flutter-style UI). The
-2026 ADA Inclusivity winner (Guitar Wiz) won by building on Dynamic Type, Increased
-Contrast and Differentiate Without Color. That's the same kind of work we'd do.
+Accessibility Reader (iOS 26, upgraded in iOS 27 with summaries, translation and content
+cleanup) already is a system-wide reading mode for dyslexia/low vision. Editors won't feature a
+copy of a system feature. We are the thing it isn't:
 
-## 2. Apple's featuring criteria → what we build
+**A library and audio player for whole documents.** Import once, listen anywhere: progress per
+document, background and Lock Screen playback, speed, sleep timer, chapters, Siri control,
+export to audio, premium voices. "Turn your reading pile into a podcast queue."
 
-Apple lists what editors look for:
+Working name: **Narrata** (placeholder; check trademark and App Store search before keeping it).
+Avoid "Listen AI": 5+ look-alikes on the store.
 
-| Criterion | Our answer |
+## 4. iOS 27 adoption list (what the nomination cites)
+
+| Platform feature | How we use it | Ships in v1? |
+|---|---|---|
+| Foundation Models, on-device | "Simplify this paragraph", chapter titles, 3-bullet preview | yes |
+| Foundation Models, Private Cloud Compute (free < 2M downloads, Small Business Program) | full-document summary, "ask this document" | yes, behind availability check |
+| OCRTool system tool | photo of a page → text | yes |
+| SpotlightSearchTool + Core Spotlight donations | search across the library, Siri search | yes (donations) / v1.1 (tool) |
+| App Schemas, Audio domain + system.searchInApp | "Hey Siri, play my latest article", skip, speed | yes |
+| Onscreen awareness entities | "read this to me" on the open document | v1.1 |
+| SwiftUI Document protocol, Liquid Glass (Xcode 27) | document import pipeline, native look for free | yes |
+| Accessibility Nutrition Labels | VoiceOver, Voice Control, Larger Text, Dark, Differentiate Without Color, Contrast, Reduced Motion | yes, all seven |
+| Translation framework | translate then listen | v1.1 |
+| CarPlay audio | needs entitlement request; apply now | v1.2 |
+
+Constraints found in research: third-party apps cannot use Siri voices; system enhanced
+voices are the free tier; Personal Voice is for AAC apps, so no voice cloning.
+
+## 5. Scope
+
+### v1 (two weeks)
+- Import: PDF (PDFKit), EPUB (unzip + XHTML strip), web article (share sheet + URL, readability
+  pass), pasted text, photo of a page (OCRTool / Vision fallback), Files app
+- Text cleanup: strip headers, footers, page numbers, hyphenation across lines
+- Player: AVSpeechSynthesizer with word and sentence highlighting, 0.5–3× speed, skip sentence /
+  paragraph, sleep timer, background audio, Now Playing / Lock Screen controls
+- Reading view: font, size, line and letter spacing, themes with AA contrast, sentence-focus mode
+- Intelligence: preview bullets, simplify paragraph, document summary (PCC when available)
+- Library: SwiftData, progress per document, sort by recent, Spotlight donation
+- Siri / Shortcuts: Audio App Schema, search-in-app, "Continue listening" intent; one widget
+- Accessibility: all applicable labels, tested with VoiceOver and Voice Control
+- Monetization: free = unlimited system voices + all accessibility; Plus = cloud voices with a
+  visible meter + unlimited summaries. Monthly and annual only, StoreKit 2, no paywall before
+  the first listen
+
+### Not in v1
+Cloud voices provider integration (design the meter now, wire the provider in 1.1), voice cloning,
+podcast generation, iPad/Mac layouts (SwiftUI runs, not tuned), CarPlay, accounts, analytics SDKs.
+
+## 6. Two-week schedule
+
+| Day | Deliverable |
 |---|---|
-| **User experience** | Open app → import anything → listening in < 5 s. Resume where you left off everywhere (iCloud sync). No account needed |
-| **UI design** | SwiftUI + Liquid Glass. The reading view is the hero: calm, customizable, beautiful typography |
-| **Innovation** | On-device Foundation Models to simplify, summarize or define hard words while you listen; multimodal OCR on photos of pages; Siri AI app actions ("read me this article") |
-| **Uniqueness** | Multisensory reading (sound + highlight + focus tools) built with dyslexic/ADHD readers, not a generic TTS player |
-| **Accessibility** | Full support for all applicable Accessibility Nutrition Labels, designed in from day one (section 4) |
-| **Localization** | Launch in 5–6 languages (UI + voices + App Store page), chosen from top revenue storefronts |
-| **Product page** | Screenshots showing real reading moments, an app preview video, In-App Events, and good ratings from the beta group |
+| 1–2 | Project from scaffold, SwiftData model, PDF + text import, basic player with highlighting |
+| 3–4 | EPUB + article + OCR import, text cleanup, Now Playing / background audio |
+| 5–6 | Reading view customization, themes, sleep timer, speed; accessibility pass 1 |
+| 7–8 | Foundation Models features with availability fallbacks; StoreKit 2 + meter UI |
+| 9 | App Intents: Audio schema, search, widget; Spotlight donations |
+| 10 | Accessibility pass 2 (VoiceOver, Voice Control, Dynamic Type XXL, Reduce Motion); Nutrition Labels |
+| 11 | Onboarding (3 screens, no paywall), App Store page: screenshots, preview video, copy in EN + 3 languages |
+| 12 | TestFlight to 10–15 dyslexic/ADHD readers; fix list |
+| 13 | Fixes, privacy manifest, "Data Not Collected" label, review notes |
+| 14 | Submit; file Featuring Nomination (App Launch) + In-App Event for Awareness Month |
 
-## 3. Features
+## 7. After launch (measure before scaling)
+Spend a fixed $1–2K on Apple Search Ads in the US on 10 exact-match keywords. Track cost per
+install, onboarding completion, first-listen rate, Plus trial start, trial → paid. Decide in
+advance: scale if payback < 90 days, iterate if first-listen rate < 60%, stop if trial → paid < 3%.
 
-### MVP (launch)
-- **Import:** PDF (PDFKit), EPUB, web pages (Share Extension + Safari Web Extension), paste text, camera/photo of a page (VisionKit / Vision OCR), Files and iCloud Drive
-- **Listen:** system neural voices via `AVSpeechSynthesizer` (free, offline, unlimited), word- and sentence-level highlight sync, 0.5–3× speed, skip by sentence or paragraph, sleep timer, Lock Screen / Now Playing, background audio
-- **Read-along view:** font, size, letter/line/word spacing, background tint and contrast presets, reading ruler / line focus, one-sentence-at-a-time mode
-- **Understand (on-device Foundation Models):** "simplify this paragraph", 3-bullet summary before you start, tap a word to get a definition and hear it spoken
-- **Clean text:** strip headers, footers, page numbers and citation clutter from PDFs
-- **Library:** progress, iCloud sync, reading streaks without guilt-tripping notifications
-- **System integration:** App Intents (Siri / Shortcuts: "read my latest import"), widgets ("continue listening"), iPad + Mac from the same codebase
-
-### After launch (timed to later featuring moments)
-- Premium cloud voices (the paid tier, metered with a visible meter)
-- Apple Pencil point-to-read on iPad
-- Translate + listen (Translation framework)
-- CarPlay audio (needs entitlement)
-- Focus timer / Pomodoro for ADHD study sessions
-- Adopt WWDC27 APIs by iOS 28 launch day (September 2027 nomination)
-
-### Deliberately not doing
-- **Voice cloning via Personal Voice.** Apple's guidance aims it at assistive-communication (AAC) apps; a general reader asking for it risks review trouble and looks off-brand
-- **Hard paywall in onboarding, weekly plans, fake "limited offer" timers**
-- **Account wall, tracking SDKs, ad networks.** We want a "Data Not Collected" privacy label
-
-## 4. Accessibility checklist (the core of the pitch)
-
-Accessibility Nutrition Labels, declared truthfully and tested:
-- [ ] VoiceOver: every control labelled, logical order, custom rotor for sentences/paragraphs
-- [ ] Voice Control: all actions reachable by name
-- [ ] Larger Text: Dynamic Type up to the largest accessibility sizes without truncation
-- [ ] Dark Interface
-- [ ] Differentiate Without Color Alone: highlight uses shape/underline as well as colour
-- [ ] Sufficient Contrast: every theme passes WCAG AA; high-contrast themes available
-- [ ] Reduced Motion: highlight animation respects the setting
-- [ ] Captions / Audio Descriptions: only if we ship video (the onboarding video gets captions)
-
-Also: Bold Text, Increase Contrast, Smart Invert, Switch Control testing, Assistive Access
-review.
-
-Process: recruit **15–20 dyslexic and ADHD readers** (students and adults) as TestFlight
-testers from October. Aim for a partnership or quote from a dyslexia organisation. Editors
-value the human story behind the app, and this is it.
-
-Wording rule: "helps you read, understand and focus", never "treats" or "cures" anything.
-
-## 5. Business model (compatible with featuring)
-
-- **Free:** unlimited on-device voices, all accessibility features, import, basic AI tools. Accessibility is never paywalled
-- **Plus (annual or monthly, ~$4.99/mo / ~$39.99/yr to start):** premium cloud voices with a visible meter, unlimited AI summaries, advanced export, cloud-voice MP3 export
-- Soft upsell after value is shown, never before the first listen
-- Consider a student discount and a family plan
-
-Free on-device voices keep costs near zero, so there's no hidden cap. That fixes Listen AI's
-biggest problem at the root.
-
-## 6. Timeline to GAAD 2027
-
-| When | Milestone |
-|---|---|
-| **Oct 2026** | 10 user interviews (dyslexic/ADHD readers); clickable prototype of the reading view; pick name + launch languages |
-| **Nov–Dec 2026** | Build MVP: import → listen → highlight → customize; Foundation Models features; TestFlight to testers |
-| **Jan 2027** | Accessibility audit against section 4; localization; iPad/Mac polish; widgets + App Intents |
-| **by 18 Feb 2027** | **Submit Featuring Nomination** (App Store Connect): app launch, preferred date GAAD week, with the story, accessibility work and tester quotes |
-| **Mar 2027** | Product page: screenshots, preview video, localized copy; press kit; submit for review |
-| **Early Apr 2027** | Launch, so ratings and reviews build up before GAAD |
-| **May 2027** | GAAD In-App Event (e.g. "Accessible Reading Week"); press outreach |
-| **Jun 2027** | WWDC27: adopt new APIs right away → nominate for iOS 28 launch (Sept) |
-| **Aug 2027** | Back to School nomination (students) |
-| **Oct 2027** | Dyslexia & ADHD Awareness Month nomination + In-App Event |
-
-## 7. Nomination write-up (draft outline)
-
-1. **What it is:** one sentence
-2. **Who it's for, and why we built it:** founder story, tester quotes
-3. **Accessibility work:** labels supported, what we tested and with whom
-4. **Apple technologies used:** Foundation Models, Vision, App Intents/Siri, Liquid Glass, widgets, iPad/Mac
-5. **Privacy:** on-device, no account, Data Not Collected
-6. **Timing:** why GAAD, and the In-App Event we're running
-7. **Localization:** languages at launch
-
-## 8. Decisions needed
-
-- Primary audience: dyslexia + ADHD together, or lead with one?
-- Launch languages (5–6)
-- App name
-- Team: who builds iOS natively (Swift/SwiftUI experience needed)
-- Mac at launch, or iPhone + iPad only
-
-## Sources
-
-- Apple, Getting featured on the App Store — https://developer.apple.com/app-store/getting-featured
-- Apple, Featuring nominations template — https://developer.apple.com/help/app-store-connect/reference/nominations/nominations-template
-- Nomination lead times — https://www.apptweak.com/en/aso-blog/how-to-get-your-app-featured-on-the-app-store
-- Accessibility Nutrition Labels — https://support.apple.com/en-us/123073 , https://developer.apple.com/videos/play/tech-talks/111433/
-- WWDC26 intelligence frameworks — https://www.apple.com/newsroom/2026/06/apple-aids-app-development-with-new-intelligence-frameworks-and-advanced-tools/
-- Foundation Models (WWDC26) — https://developer.apple.com/videos/play/wwdc2026/241/
-- Personal Voice guidance — https://developer.apple.com/videos/play/wwdc2023/10033/ , https://blakecrosley.com/blog/accessibility-platform-features
-- 2026 Apple Design Awards — https://www.apple.com/newsroom/2026/06/apple-reveals-winners-of-the-2026-apple-design-awards/
+## 8. Sources
+- Nominations: https://developer.apple.com/help/app-store-connect/manage-featuring-nominations/nominate-your-app-for-featuring/
+- Featuring criteria: https://developer.apple.com/app-store/getting-featured
+- WWDC26 Foundation Models (241): https://developer.apple.com/videos/play/wwdc2026/241/
+- WWDC26 PCC model (319): https://developer.apple.com/videos/play/wwdc2026/319/
+- WWDC26 App Schemas (240): https://developer.apple.com/videos/play/wwdc2026/240/
+- WWDC26 SwiftUI (269): https://developer.apple.com/videos/play/wwdc2026/269/
+- Accessibility Reader: https://support.apple.com/guide/iphone/read-listen-text-apps-accessibility-reader-iph406a46ab8/ios
+- Accessibility Nutrition Labels: https://support.apple.com/en-us/123073
+- Siri voices not available to third parties: https://speechcentral.net/2026/08/08/why-cant-third-party-apps-use-siri-voices-on-iphone-ipad-and-mac/
+- iOS 27 release: https://www.macrumors.com/2026/09/14/apple-releases-ios-27/
