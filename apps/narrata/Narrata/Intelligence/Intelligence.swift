@@ -20,10 +20,10 @@ enum Intelligence {
     }
 
     /// Three bullets shown before the first listen.
-    static func preview(of document: Document) async -> [String]? {
+    static func preview(title: String, text: String) async -> [String]? {
         await generate(
             instructions: "You write three short bullet points that tell a listener what a document covers. Plain language, no markdown.",
-            prompt: "Document title: \(document.title)\n\n\(document.fullText.prefix(6000))"
+            prompt: "Document title: \(title)\n\n\(text.prefix(6000))"
         ).map { $0.split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty } }
     }
 
@@ -37,12 +37,11 @@ enum Intelligence {
 
     /// Whole-document summary. Prefers the larger Private Cloud Compute model when it is
     /// available (32K context); falls back to a chunked on-device summary.
-    static func summary(of document: Document) async -> String? {
+    static func summary(text: String) async -> String? {
         #if canImport(FoundationModels)
         // TODO(day 7): switch to PrivateCloudComputeLanguageModel when SDK confirms the type:
         //   let session = LanguageModelSession(model: PrivateCloudComputeLanguageModel.default, instructions: ...)
         #endif
-        let text = document.fullText
         if text.count <= 6000 {
             return await generate(instructions: summaryInstructions, prompt: text)
         }

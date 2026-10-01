@@ -38,7 +38,7 @@ struct PlayerView: View {
                 Button("Reading Settings", systemImage: "textformat.size") { showSettings = true }
             }
             ToolbarItem(placement: .secondaryAction) {
-                Button("Summarize", systemImage: "text.badge.star") { Task { summary = await Intelligence.summary(of: document) } }
+                Button("Summarize", systemImage: "text.badge.star") { Task { let text = document.fullText; summary = await Intelligence.summary(text: text) } }
                     .disabled(Intelligence.availability == .unavailable)
             }
         }
@@ -49,7 +49,10 @@ struct PlayerView: View {
         }
         .task {
             prefs = (try? JSONDecoder().decode(ReadingPrefs.self, from: prefsData)) ?? ReadingPrefs()
-            if document.progressSentence == 0 { preview = await Intelligence.preview(of: document) }
+            if document.progressSentence == 0 {
+                let (title, text) = (document.title, document.fullText)
+                preview = await Intelligence.preview(title: title, text: text)
+            }
         }
         .onChange(of: prefs) { _, new in prefsData = (try? JSONEncoder().encode(new)) ?? Data() }
     }
