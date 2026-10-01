@@ -7,6 +7,10 @@ options:
     iOS: "27.0"
   xcodeVersion: "27.0"
   createIntermediateGroups: true
+packages:
+  ZIPFoundation:
+    url: https://github.com/weichsel/ZIPFoundation
+    from: 0.9.19
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -31,6 +35,9 @@ targets:
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         ITSAppUsesNonExemptEncryption: false
         LSSupportsOpeningDocumentsInPlace: true
+        CFBundleURLTypes:
+          - CFBundleURLName: com.theoryofweb.narrata
+            CFBundleURLSchemes: [narrata]
         CFBundleDocumentTypes:
           - CFBundleTypeName: PDF
             LSHandlerRank: Alternate
@@ -46,6 +53,7 @@ targets:
       properties:
         com.apple.developer.siri: true
     dependencies:
+      - package: ZIPFoundation
       - target: NarrataShare
       - target: NarrataWidgets
   NarrataShare:

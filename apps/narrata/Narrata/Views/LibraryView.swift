@@ -63,8 +63,12 @@ struct LibraryView: View {
             .alert("Couldn't import", isPresented: .constant(importer.lastError != nil)) {
                 Button("OK") { importer.lastError = nil }
             } message: { Text(importer.lastError ?? "") }
-            .onChange(of: importer.pending) { _, doc in
-                if let doc { insert(doc); importer.pending = nil }
+            .onChange(of: importer.pending.count) { _, count in
+                guard count > 0 else { return }
+                let docs = importer.pending
+                importer.pending.removeAll()
+                docs.forEach { context.insert($0) }
+                if let last = docs.last { open(last) }
             }
             .safeAreaInset(edge: .bottom) { if player.document != nil { MiniPlayerBar() } }
         }

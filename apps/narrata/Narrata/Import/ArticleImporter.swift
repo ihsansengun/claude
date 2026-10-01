@@ -8,9 +8,9 @@ enum ArticleImporter {
         guard let html = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .isoLatin1) else {
             throw ImportError.network
         }
-        let title = firstMatch(in: html, pattern: "<title[^>]*>([^<]+)</title>") ?? url.host() ?? "Article"
-        let body = firstMatch(in: html, pattern: "<article[\\s\\S]*?</article>")
-            ?? firstMatch(in: html, pattern: "<main[\\s\\S]*?</main>")
+        let title = EPUBImporter.firstMatch(in: html, pattern: "<title[^>]*>([^<]+)</title>") ?? url.host() ?? "Article"
+        let body = EPUBImporter.matches(in: html, pattern: "<article[\\s\\S]*?</article>").first
+            ?? EPUBImporter.matches(in: html, pattern: "<main[\\s\\S]*?</main>").first
             ?? html
         let text = EPUBImporter.plainText(fromHTML: body)
         let sentences = TextCleaner.sentences(fromPlainText: text)
@@ -18,12 +18,6 @@ enum ArticleImporter {
         return Document(title: decode(title), kind: .article, sentences: sentences, sourceURL: url)
     }
 
-    private static func firstMatch(in s: String, pattern: String) -> String? {
-        guard let re = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
-              let m = re.firstMatch(in: s, range: NSRange(s.startIndex..., in: s)) else { return nil }
-        let r = m.numberOfRanges > 1 ? m.range(at: 1) : m.range
-        return Range(r, in: s).map { String(s[$0]) }
-    }
 
     private static func decode(_ s: String) -> String {
         EPUBImporter.plainText(fromHTML: s).trimmingCharacters(in: .whitespacesAndNewlines)

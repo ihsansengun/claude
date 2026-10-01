@@ -11,8 +11,9 @@ struct NarrataApp: App {
             LibraryView()
                 .environment(player)
                 .environment(importer)
+                .task { await importer.drainInbox() }
                 .onOpenURL { url in
-                    Task { await importer.importFile(at: url) }
+                    Task { await importer.handle(url: url) }
                 }
         }
         .modelContainer(for: [Document.self], isAutosaveEnabled: true)

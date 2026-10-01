@@ -30,7 +30,20 @@ final class ShareViewController: UIViewController {
                 }
             }
         }
-        // TODO(day 3): open the container app via a custom URL scheme (narrata://inbox);
-        // the app drains the inbox in NarrataApp.onOpenURL.
+        openContainerApp()
+    }
+
+    /// Share extensions can't call UIApplication.open directly; walking the responder chain
+    /// to the hosting application is the long-standing workaround.
+    private func openContainerApp() {
+        guard let url = URL(string: "narrata://inbox") else { return }
+        var responder: UIResponder? = self
+        while let r = responder {
+            if let app = r as? UIApplication {
+                app.open(url, options: [:], completionHandler: nil)
+                return
+            }
+            responder = r.next
+        }
     }
 }

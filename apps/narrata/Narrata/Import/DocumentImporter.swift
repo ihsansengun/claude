@@ -10,7 +10,8 @@ import Observation
 final class DocumentImporter {
     var isImporting = false
     var lastError: String?
-    var pending: Document?   // set by importers; LibraryView inserts into the model context
+    /// Imported documents waiting for LibraryView to insert them into the model context.
+    var pending: [Document] = []
 
     func importFile(at url: URL) async {
         isImporting = true
@@ -22,12 +23,12 @@ final class DocumentImporter {
             let type = UTType(filenameExtension: url.pathExtension) ?? .data
             let title = url.deletingPathExtension().lastPathComponent
             if type.conforms(to: .pdf) {
-                pending = try importPDF(url: url, title: title)
+                pending.append(try importPDF(url: url, title: title))
             } else if type.conforms(to: .epub) {
-                pending = try EPUBImporter.document(from: url, title: title)
+                pending.append(try EPUBImporter.document(from: url, title: title))
             } else if type.conforms(to: .plainText) {
                 let text = try String(contentsOf: url, encoding: .utf8)
-                pending = Document(title: title, kind: .text, sentences: TextCleaner.sentences(fromPlainText: text), sourceURL: url)
+                pending.append(Document(title: title, kind: .text, sentences: TextCleaner.sentences(fromPlainText: text), sourceURL: url))
             } else {
                 throw ImportError.unsupported(url.pathExtension)
             }
@@ -37,16 +38,47 @@ final class DocumentImporter {
     }
 
     func importText(_ text: String, title: String = "Pasted text") {
-        pending = Document(title: title, kind: .text, sentences: TextCleaner.sentences(fromPlainText: text))
+        pending.append(Document(title: title, kind: .text, sentences: TextCleaner.sentences(fromPlainText: text)))
     }
 
     func importArticle(from url: URL) async {
         isImporting = true
         defer { isImporting = false }
         do {
-            pending = try await ArticleImporter.document(from: url)
+            pending.append(try await ArticleImporter.document(from: url))
         } catch {
             lastError = error.localizedDescription
+        }
+    }
+
+    /// Handles `narrata://inbox` from the share extension and any file left in the
+    /// App Group inbox by it.
+    func handle(url: URL) async {
+        if url.scheme == "narrata" {
+            if url.host() == "inbox" { await drainInbox() }
+            return
+        }
+        await importFile(at: url)
+    }
+
+    static let appGroupID = "group.com.theoryofweb.narrata"
+
+    func drainInbox() async {
+        guard let inbox = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: Self.appGroupID)?
+            .appending(path: "inbox", directoryHint: .isDirectory),
+              let items = try? FileManager.default.contentsOfDirectory(at: inbox, includingPropertiesForKeys: nil) else { return }
+        for item in items.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
+            switch item.pathExtension {
+            case "url":
+                if let s = try? String(contentsOf: item, encoding: .utf8), let link = URL(string: s.trimmingCharacters(in: .whitespacesAndNewlines)) {
+                    await importArticle(from: link)
+                }
+            case "txt":
+                if let s = try? String(contentsOf: item, encoding: .utf8) { importText(s, title: "Shared text") }
+            default:
+                await importFile(at: item)
+            }
+            try? FileManager.default.removeItem(at: item)
         }
     }
 

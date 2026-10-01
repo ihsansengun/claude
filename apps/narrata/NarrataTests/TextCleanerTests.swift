@@ -20,3 +20,11 @@ struct TextCleanerTests {
         #expect(s.map(\.paragraphIndex) == [0, 0, 1])
     }
 }
+
+struct HTMLTests {
+    @Test func stripsTagsAndDecodesEntities() {
+        let html = "<html><body><h1>Title &amp; more</h1><p>One&#8217;s line.<br>Two</p><script>x()</script></body></html>"
+        let text = EPUBImporter.plainText(fromHTML: html)
+        #expect(text == "Title & more\n\nOne’s line.\n\nTwo")
+    }
+}
