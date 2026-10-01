@@ -19,6 +19,17 @@ enum Intelligence {
         return .unavailable
     }
 
+    #if canImport(FoundationModels)
+    /// The larger Private Cloud Compute model (32K context, reasoning). Free for apps under
+    /// 2M downloads in the Small Business Program; needs the managed entitlement, so it is
+    /// nil in CI and on devices where the entitlement or quota is unavailable.
+    private static var cloudModel: (any LanguageModel)? {
+        let model = PrivateCloudComputeLanguageModel()
+        if case .available = model.availability { return model }
+        return nil
+    }
+    #endif
+
     /// Three bullets shown before the first listen.
     static func preview(title: String, text: String) async -> [String]? {
         await generate(
@@ -39,8 +50,12 @@ enum Intelligence {
     /// available (32K context); falls back to a chunked on-device summary.
     static func summary(text: String) async -> String? {
         #if canImport(FoundationModels)
-        // TODO(day 7): switch to PrivateCloudComputeLanguageModel when SDK confirms the type:
-        //   let session = LanguageModelSession(model: PrivateCloudComputeLanguageModel.default, instructions: ...)
+        if let cloud = cloudModel, text.count <= 100_000 {
+            if let result = try? await LanguageModelSession(model: cloud, instructions: summaryInstructions)
+                .respond(to: String(text.prefix(100_000))).content {
+                return result
+            }
+        }
         #endif
         if text.count <= 6000 {
             return await generate(instructions: summaryInstructions, prompt: text)

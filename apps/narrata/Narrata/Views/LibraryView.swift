@@ -14,6 +14,7 @@ struct LibraryView: View {
     @State private var urlText = ""
     @State private var selected: Document?
     @State private var showSettings = false
+    @State private var searchText = ""
 
     var body: some View {
         NavigationStack {
@@ -26,13 +27,13 @@ struct LibraryView: View {
                     )
                 } else {
                     List {
-                        ForEach(documents) { doc in
+                        ForEach(filteredDocuments) { doc in
                             Button { open(doc) } label: { DocumentRow(document: doc) }
                                 .buttonStyle(.plain)
                                 .accessibilityHint("Opens the player")
                         }
                         .onDelete { offsets in
-                            for doc in offsets.map({ documents[$0] }) {
+                            for doc in offsets.map({ filteredDocuments[$0] }) {
                                 SpotlightIndexer.remove(doc.id)
                                 context.delete(doc)
                             }
@@ -41,6 +42,7 @@ struct LibraryView: View {
                 }
             }
             .navigationTitle("Library")
+            .searchable(text: $searchText, prompt: "Search your library")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Settings", systemImage: "gearshape") { showSettings = true }
@@ -89,6 +91,11 @@ struct LibraryView: View {
         }
     }
 
+    private var filteredDocuments: [Document] {
+        searchText.isEmpty ? documents
+            : documents.filter { $0.title.localizedCaseInsensitiveContains(searchText) || $0.fullText.localizedCaseInsensitiveContains(searchText) }
+    }
+
     private var urlSheet: some View {
         NavigationStack {
             Form {
@@ -119,6 +126,12 @@ struct LibraryView: View {
             }
         case .play(let id):
             if let doc = documents.first(where: { $0.id == id }) { open(doc); player.play() }
+        case .pause:
+            player.pause()
+        case .skip(let delta):
+            player.skipParagraph(delta)
+        case .search(let term):
+            searchText = term
         }
     }
 

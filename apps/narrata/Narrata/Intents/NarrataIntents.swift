@@ -79,6 +79,6 @@ struct NarrataShortcuts: AppShortcutsProvider {
 @Observable
 final class AppRouter {
     static let shared = AppRouter()
-    enum Action { case continueListening, play(id: UUID) }
+    enum Action { case continueListening, play(id: UUID), pause, skip(Int), search(String) }
     var pendingAction: Action?
 }
