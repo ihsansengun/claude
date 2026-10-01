@@ -1,0 +1,49 @@
+name: narrata-ios
+
+on:
+  push:
+    branches: ["**"]
+    paths: ["apps/narrata/**", ".github/workflows/narrata-ios.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: narrata-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # xcode-27 image = macOS 27 + Xcode 27 (public preview, arm64). Fall back to macos-26 if it
+    # ever disappears; iOS 27 SDK is required for the Foundation Models and glass APIs.
+    runs-on: xcode-27
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: apps/narrata
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain info
+        run: |
+          sw_vers
+          xcodebuild -version
+          xcrun simctl list devices available | grep -i iphone | head -5
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate project
+        run: xcodegen generate --spec project.yml
+
+      - name: Build (simulator, no signing)
+        run: ./scripts/build.sh build
+
+      - name: Unit tests
+        run: ./scripts/build.sh test
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-logs
+          path: apps/narrata/build/*.log
+          if-no-files-found: ignore
