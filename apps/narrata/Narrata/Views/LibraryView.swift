@@ -13,6 +13,7 @@ struct LibraryView: View {
     @State private var showScanner = false
     @State private var urlText = ""
     @State private var selected: Document?
+    @State private var showSettings = false
 
     var body: some View {
         NavigationStack {
@@ -36,6 +37,9 @@ struct LibraryView: View {
             }
             .navigationTitle("Library")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Settings", systemImage: "gearshape") { showSettings = true }
+                }
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
                         Button("Import File", systemImage: "doc") { showFilePicker = true }
@@ -51,6 +55,7 @@ struct LibraryView: View {
                 if case .success(let url) = result { Task { await importer.importFile(at: url) } }
             }
             .sheet(isPresented: $showURLSheet) { urlSheet }
+            .sheet(isPresented: $showSettings) { SettingsView() }
             .sheet(isPresented: $showScanner) {
                 ScannerView { images in
                     Task {
