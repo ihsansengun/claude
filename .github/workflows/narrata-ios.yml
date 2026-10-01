@@ -32,7 +32,8 @@ jobs:
         run: |
           IFACE=$(find "$(xcode-select -p)/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/System/Library/Frameworks/AppIntents.framework" -name '*.swiftinterface' | head -1)
           echo "interface: $IFACE"
-          grep -n -E 'AudioIntent|SystemIntent' "$IFACE" | grep -E 'static (var|func|let)' | head -80 || true
+          awk '/extension AppIntents.AppSchema.AudioIntent/{f=1} f{print} f&&/^}/{f=0}' "$IFACE" | grep -E 'static|extension' | head -60 || true
+          awk '/extension AppIntents.AppSchema.SystemIntent/{f=1} f{print} f&&/^}/{f=0}' "$IFACE" | grep -E 'static|extension' | head -40 || true
 
       - name: Install XcodeGen
         run: brew install xcodegen

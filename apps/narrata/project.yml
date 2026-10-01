@@ -69,6 +69,7 @@ targets:
     info:
       path: NarrataShare/Info.plist
       properties:
+        CFBundleDisplayName: Narrata
         NSExtension:
           NSExtensionPointIdentifier: com.apple.share-services
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
@@ -91,6 +92,7 @@ targets:
     info:
       path: NarrataWidgets/Info.plist
       properties:
+        CFBundleDisplayName: Narrata Widgets
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     entitlements:
