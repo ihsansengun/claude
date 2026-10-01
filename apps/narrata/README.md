@@ -12,8 +12,8 @@ xcodegen                    # writes Narrata.xcodeproj from project.yml
 open Narrata.xcodeproj
 ```
 
-Then in Xcode: set your team in Signing & Capabilities, change `com.yourcompany` in
-`project.yml` (bundle IDs, App Group, product IDs) and regenerate.
+Then in Xcode: set your team in Signing & Capabilities, the bundle ID is `com.theoryofweb.narrata` (set in
+`project.yml`; App Group `group.com.theoryofweb.narrata`, product IDs `com.theoryofweb.narrata.plus.*`).
 
 ## Layout
 

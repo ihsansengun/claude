@@ -7,7 +7,7 @@ import Observation
 @Observable
 @MainActor
 final class Store {
-    static let productIDs = ["com.yourcompany.narrata.plus.monthly", "com.yourcompany.narrata.plus.annual"]
+    static let productIDs = ["com.theoryofweb.narrata.plus.monthly", "com.theoryofweb.narrata.plus.annual"]
 
     private(set) var products: [Product] = []
     private(set) var hasPlus = false

@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 /// Share sheet target: receives a URL, text or file, drops it in the App Group inbox,
 /// then opens the main app, which imports whatever is in the inbox on launch.
 final class ShareViewController: UIViewController {
-    static let groupID = "group.com.yourcompany.narrata"
+    static let groupID = "group.com.theoryofweb.narrata"
 
     override func viewDidLoad() {
         super.viewDidLoad()

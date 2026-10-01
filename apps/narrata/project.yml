@@ -2,7 +2,7 @@
 # then open Narrata.xcodeproj in Xcode 27.
 name: Narrata
 options:
-  bundleIdPrefix: com.yourcompany
+  bundleIdPrefix: com.theoryofweb
   deploymentTarget:
     iOS: "27.0"
   xcodeVersion: "27.0"
@@ -66,7 +66,7 @@ targets:
     entitlements:
       path: NarrataShare/NarrataShare.entitlements
       properties:
-        com.apple.security.application-groups: [group.com.yourcompany.narrata]
+        com.apple.security.application-groups: [group.com.theoryofweb.narrata]
   NarrataWidgets:
     type: app-extension
     platform: iOS
