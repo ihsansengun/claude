@@ -1,5 +1,7 @@
 import AppIntents
 
+#if NARRATA_AUDIO_SCHEMA
+
 /// Siri AI / App Schemas, Audio domain (WWDC26 session 240). The schema macros constrain the
 /// intent shape; if the SDK rejects a schema case name below, check
 /// `AppIntentSchema.audio` in the iOS 27 SDK headers and rename accordingly.
@@ -51,6 +53,8 @@ struct SiriSkipBackwardIntent: AppIntent {
         return .result()
     }
 }
+
+#endif
 
 /// "Search Narrata for climate" — the one schema every app should adopt.
 @AppIntent(schema: .system.search)
