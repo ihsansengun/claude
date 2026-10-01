@@ -21,7 +21,7 @@ Then in Xcode: set your team in Signing & Capabilities, the bundle ID is `com.th
 Narrata/
   NarrataApp.swift            entry, SwiftData container
   Models/Document.swift       library item = title + sentences + progress
-  Import/                     PDFKit, EPUB (stub), article fetch, Vision OCR, text cleanup
+  Import/                     PDFKit, EPUB (ZIPFoundation), article fetch, Vision OCR, text cleanup
   Player/PlayerEngine.swift   AVSpeechSynthesizer, sentence-at-a-time, Now Playing, remote commands
   Intelligence/               Foundation Models: preview, simplify, summary (all with fallbacks)
   Intents/                    App Intents + Shortcuts (Audio App Schema to add on day 9)
@@ -32,13 +32,16 @@ NarrataWidgets/               "Continue listening" widget
 NarrataTests/                 Swift Testing, text cleanup
 ```
 
-## Known gaps (tracked in the two-week schedule)
-- EPUB import needs ZIPFoundation (day 3). Share extension needs the URL-scheme hand-off (day 3).
-- Foundation Models calls were written from WWDC26 session notes; confirm `LanguageModelSession`,
-  `PrivateCloudComputeLanguageModel` and `OCRTool` signatures against the SDK (day 7).
-- Audio App Schema and `system.searchInApp` annotations (day 9).
-- Widget timeline reads placeholder data (day 9).
-- Cloud voice provider not wired; the meter and entitlement exist (v1.1).
+## CI
 
-This scaffold was written without access to Xcode, so expect a first round of compiler
-fixes on day 1, mostly around iOS 27 API names.
+`.github/workflows/narrata-ios.yml` builds and runs the unit tests on GitHub's `xcode-27` macOS
+runner for every push touching `apps/narrata/`. `scripts/build.sh build|test` is the same command
+used locally. Build logs are uploaded as an artifact on failure.
+
+## Known gaps
+- Siri Audio App Schema intents are written but gated behind `NARRATA_AUDIO_SCHEMA` until the
+  SDK schema case names are confirmed (the CI "Dump App Schema names" step prints them).
+- Widget deep link `narrata://continue` and share-sheet hand-off `narrata://inbox` need a device
+  test; simulators don't exercise the share extension's responder-chain `open`.
+- Cloud voice provider not wired; the Plus entitlement and usage meter exist (v1.1).
+- Screenshots, app icon and preview video are not in the repo yet.
