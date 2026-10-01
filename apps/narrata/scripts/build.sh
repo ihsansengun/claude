@@ -22,7 +22,17 @@ COMMON=(-project Narrata.xcodeproj -scheme Narrata -destination "$DEST"
 set -o pipefail
 if [ "$ACTION" = "test" ]; then
   xcodebuild test "${COMMON[@]}" 2>&1 | tee build/test.log | grep -E "error:|warning: unre|Test Case|Executed|\*\* TEST" || true
-  grep -q "\*\* TEST SUCCEEDED \*\*" build/test.log
+  if ! grep -q "\*\* TEST SUCCEEDED \*\*" build/test.log; then
+    echo "::group::install/launch diagnostics"
+    grep -n -i -E "validate|NSExtension|XPC|Unable to Install|MIInstall|failed to install|error ?[:=]|reason|description" build/test.log | grep -v "warning:" | head -80
+    APP=$(find build/DerivedData -path '*Debug-iphonesimulator/Narrata.app' -maxdepth 6 | head -1)
+    echo "app: $APP"
+    for plist in "$APP/Info.plist" "$APP"/PlugIns/*/Info.plist; do
+      echo "--- $plist"; plutil -p "$plist" | head -60
+    done
+    echo "::endgroup::"
+    exit 1
+  fi
 else
   xcodebuild build "${COMMON[@]}" 2>&1 | tee build/build.log | grep -E "error:|\*\* BUILD" || true
   grep -q "\*\* BUILD SUCCEEDED \*\*" build/build.log

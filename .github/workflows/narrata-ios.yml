@@ -32,8 +32,7 @@ jobs:
         run: |
           IFACE=$(find "$(xcode-select -p)/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/System/Library/Frameworks/AppIntents.framework" -name '*.swiftinterface' | head -1)
           echo "interface: $IFACE"
-          grep -oE 'AudioIntent[^{]*\{|static var [a-zA-Z]+: some AppSchema\.(AudioIntent|SystemIntent)' "$IFACE" | sort -u | head -80 || true
-          grep -oE 'extension AppSchema\.[A-Za-z]+Intent[^{]*' "$IFACE" | sort -u | head -40 || true
+          grep -n -E 'AudioIntent|SystemIntent' "$IFACE" | grep -E 'static (var|func|let)' | head -80 || true
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -45,6 +44,7 @@ jobs:
         run: ./scripts/build.sh build
 
       - name: Unit tests
+        timeout-minutes: 20
         run: ./scripts/build.sh test
 
       - name: Upload logs on failure
