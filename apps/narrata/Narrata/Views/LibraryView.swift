@@ -31,7 +31,12 @@ struct LibraryView: View {
                                 .buttonStyle(.plain)
                                 .accessibilityHint("Opens the player")
                         }
-                        .onDelete { offsets in offsets.map { documents[$0] }.forEach(context.delete) }
+                        .onDelete { offsets in
+                            for doc in offsets.map({ documents[$0] }) {
+                                SpotlightIndexer.remove(doc.id)
+                                context.delete(doc)
+                            }
+                        }
                     }
                 }
             }
@@ -72,10 +77,15 @@ struct LibraryView: View {
                 guard count > 0 else { return }
                 let docs = importer.pending
                 importer.pending.removeAll()
-                docs.forEach { context.insert($0) }
+                for doc in docs {
+                    context.insert(doc)
+                    SpotlightIndexer.index(doc)
+                }
                 if let last = docs.last { open(last) }
             }
             .safeAreaInset(edge: .bottom) { if player.document != nil { MiniPlayerBar() } }
+            .onChange(of: AppRouter.shared.pendingAction != nil) { _, _ in handleRouterAction() }
+            .onAppear { handleRouterAction() }
         }
     }
 
@@ -99,8 +109,22 @@ struct LibraryView: View {
         .presentationDetents([.fraction(0.3)])
     }
 
+    private func handleRouterAction() {
+        guard let action = AppRouter.shared.pendingAction else { return }
+        AppRouter.shared.pendingAction = nil
+        switch action {
+        case .continueListening:
+            if let doc = documents.max(by: { ($0.lastOpenedAt ?? .distantPast) < ($1.lastOpenedAt ?? .distantPast) }) {
+                open(doc); player.play()
+            }
+        case .play(let id):
+            if let doc = documents.first(where: { $0.id == id }) { open(doc); player.play() }
+        }
+    }
+
     private func insert(_ doc: Document) {
         context.insert(doc)
+        SpotlightIndexer.index(doc)
         open(doc)
     }
 

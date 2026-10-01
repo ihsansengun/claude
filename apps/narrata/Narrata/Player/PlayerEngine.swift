@@ -2,6 +2,7 @@ import Foundation
 import AVFoundation
 import MediaPlayer
 import Observation
+import WidgetKit
 
 /// Sentence-at-a-time playback on AVSpeechSynthesizer with word-level highlight callbacks.
 /// Speaking one sentence per utterance (instead of the whole document) is what avoids the
@@ -101,7 +102,10 @@ final class PlayerEngine: NSObject {
     }
 
     private func persistProgress() {
-        document?.progressSentence = currentSentence
+        guard let document else { return }
+        document.progressSentence = currentSentence
+        NowPlayingSnapshot.write(document)
+        WidgetCenter.shared.reloadTimelines(ofKind: "ContinueListening")
     }
 
     private func configureAudioSession() {

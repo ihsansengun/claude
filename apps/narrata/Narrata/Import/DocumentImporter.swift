@@ -55,7 +55,11 @@ final class DocumentImporter {
     /// App Group inbox by it.
     func handle(url: URL) async {
         if url.scheme == "narrata" {
-            if url.host() == "inbox" { await drainInbox() }
+            switch url.host() {
+            case "inbox": await drainInbox()
+            case "continue": AppRouter.shared.pendingAction = .continueListening
+            default: break
+            }
             return
         }
         await importFile(at: url)
