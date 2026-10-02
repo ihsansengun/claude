@@ -46,7 +46,7 @@ Avoid "Listen AI": 5+ look-alikes on the store.
 | Foundation Models, Private Cloud Compute (free < 2M downloads, Small Business Program) | full-document summary, "ask this document" | yes, behind availability check |
 | OCRTool system tool | photo of a page → text | yes |
 | SpotlightSearchTool + Core Spotlight donations | search across the library, Siri search | yes (donations) / v1.1 (tool) |
-| App Schemas, Audio domain + system.searchInApp | "Hey Siri, play my latest article", skip, speed | yes |
+| App Schemas, System domain (`searchInApp`, `open`) + Now Playing commands | "Search Narrata for…", "Open … in Narrata", voice play/pause/skip | yes |
 | Onscreen awareness entities | "read this to me" on the open document | v1.1 |
 | SwiftUI Document protocol, Liquid Glass (Xcode 27) | document import pipeline, native look for free | yes |
 | Accessibility Nutrition Labels | VoiceOver, Voice Control, Larger Text, Dark, Differentiate Without Color, Contrast, Reduced Motion | yes, all seven |
@@ -84,7 +84,7 @@ podcast generation, iPad/Mac layouts (SwiftUI runs, not tuned), CarPlay, account
 - [x] Day 5–6: reading settings, 5 AA-contrast themes, sleep timer, speed; accessibility pass 1
 - [x] Day 7–8: Foundation Models (on-device + PCC path), StoreKit 2 + visible meter
 - [x] Day 9: App Intents (search schema, Continue Listening), Spotlight donation, widget
-- [~] Day 9: Siri Audio App Schema — written, gated until SDK case names confirmed
+- [x] Day 9: Siri schemas — System domain (`searchInApp`, `open`); Audio domain dropped (music-service shape, not a reader fit)
 - [x] Day 10: accessibility pass 2 (Dynamic Type scaling, Increase Contrast, VoiceOver paragraph labels, Reduce Motion)
 - [x] Day 11: onboarding (3 screens, no paywall); App Store copy + nomination text drafted
 - [ ] Day 12: TestFlight to dyslexic/ADHD readers — needs Apple Developer account + device build
