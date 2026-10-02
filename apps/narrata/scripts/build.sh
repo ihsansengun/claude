@@ -21,7 +21,14 @@ COMMON=(-project Narrata.xcodeproj -scheme Narrata -destination "$DEST"
 
 set -o pipefail
 if [ "$ACTION" = "test" ]; then
-  xcodebuild test "${COMMON[@]}" 2>&1 | tee build/test.log | grep -E "error:|warning: unre|Test Case|Executed|\*\* TEST" || true
+  xcodebuild test "${COMMON[@]}" 2>&1 | tee build/test.log | grep -E "error:|Test Case|Executed|Test run|Suite |✔|✘|\*\* TEST" || true
+  # Swift Testing prints its own summary; fail if any test failed or none ran.
+  if grep -qE "✘|Test run with [0-9]+ tests? (failed|in)" build/test.log && grep -qE "✘" build/test.log; then
+    echo "Swift Testing reported failures"; exit 1
+  fi
+  if ! grep -qE "Test run with [1-9][0-9]* tests? passed" build/test.log; then
+    echo "::warning::No Swift Testing summary found; check that tests ran"
+  fi
   if ! grep -q "\*\* TEST SUCCEEDED \*\*" build/test.log; then
     echo "::group::install/launch diagnostics"
     grep -n -i -E "validate|NSExtension|XPC|Unable to Install|MIInstall|failed to install|error ?[:=]|reason|description" build/test.log | grep -v "warning:" | head -80
