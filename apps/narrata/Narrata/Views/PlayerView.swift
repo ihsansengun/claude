@@ -4,6 +4,7 @@ struct PlayerView: View {
     let document: Document
     @Environment(PlayerEngine.self) private var player
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorSchemeContrast) private var contrast
     @AppStorage("readingPrefs") private var prefsData = Data()
     @State private var prefs = ReadingPrefs()
     @State private var showSettings = false
@@ -16,14 +17,14 @@ struct PlayerView: View {
                 LazyVStack(alignment: .leading, spacing: prefs.paragraphSpacing) {
                     if let preview { PreviewCard(bullets: preview) }
                     ForEach(paragraphs, id: \.0) { pIndex, sentences in
-                        ParagraphView(sentences: sentences, prefs: prefs)
+                        ParagraphView(sentences: sentences, prefs: effectivePrefs)
                             .id(pIndex)
                     }
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 160)
             }
-            .background(prefs.theme.background)
+            .background(effectivePrefs.theme.background)
             .onChange(of: player.currentSentence) { _, idx in
                 guard prefs.followAlong, idx < document.sentences.count else { return }
                 let p = document.sentences[idx].paragraphIndex
@@ -57,6 +58,13 @@ struct PlayerView: View {
         .onChange(of: prefs) { _, new in prefsData = (try? JSONEncoder().encode(new)) ?? Data() }
     }
 
+    /// Increase Contrast forces the high-contrast theme regardless of the chosen one.
+    private var effectivePrefs: ReadingPrefs {
+        var p = prefs
+        if contrast == .increased { p.theme = .highContrast }
+        return p
+    }
+
     private var paragraphs: [(Int, [Sentence])] {
         Dictionary(grouping: document.sentences, by: \.paragraphIndex)
             .sorted { $0.key < $1.key }
@@ -72,6 +80,9 @@ struct ParagraphView: View {
     let sentences: [Sentence]
     let prefs: ReadingPrefs
     @Environment(PlayerEngine.self) private var player
+    @State private var simplified: String?
+
+    private var isActiveParagraph: Bool { sentences.contains { $0.id == player.currentSentence } }
 
     var body: some View {
         Text(attributed)
@@ -82,8 +93,19 @@ struct ParagraphView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .contentShape(.rect)
             .onTapGesture { player.seek(toSentence: sentences.first?.id ?? 0) }
-            .accessibilityAddTraits(.allowsDirectInteraction)
+            .accessibilityLabel(sentences.map(\.text).joined(separator: " "))
+            .accessibilityValue(isActiveParagraph ? "Now reading" : "")
             .accessibilityAction(named: "Play from here") { player.seek(toSentence: sentences.first?.id ?? 0); player.play() }
+            .accessibilityAction(named: "Simplify") { Task { simplified = await Intelligence.simplify(sentences.map(\.text).joined(separator: " ")) } }
+            .contextMenu {
+                Button("Play from here", systemImage: "play") { player.seek(toSentence: sentences.first?.id ?? 0); player.play() }
+                Button("Simplify", systemImage: "text.badge.minus") { Task { simplified = await Intelligence.simplify(sentences.map(\.text).joined(separator: " ")) } }
+                    .disabled(Intelligence.availability == .unavailable)
+            }
+            .sheet(item: $simplified) { text in
+                NavigationStack { ScrollView { Text(text).font(prefs.font).padding() }.navigationTitle("Simplified") }
+                    .presentationDetents([.medium, .large])
+            }
     }
 
     private var attributed: AttributedString {

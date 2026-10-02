@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct ReadingPrefs: Codable, Equatable {
     var fontChoice: FontChoice = .system
@@ -13,12 +14,15 @@ struct ReadingPrefs: Codable, Equatable {
     enum FontChoice: String, Codable, CaseIterable { case system, rounded, serif, mono }
     enum Theme: String, Codable, CaseIterable { case paper, dark, sepia, highContrast, blueTint }
 
+    /// The in-app size is a base; it still scales with the system Dynamic Type setting so
+    /// "Larger Text" users get both controls.
     var font: Font {
+        let size = UIFontMetrics(forTextStyle: .body).scaledValue(for: fontSize)
         switch fontChoice {
-        case .system: .system(size: fontSize)
-        case .rounded: .system(size: fontSize, design: .rounded)
-        case .serif: .system(size: fontSize, design: .serif)
-        case .mono: .system(size: fontSize, design: .monospaced)
+        case .system: return .system(size: size)
+        case .rounded: return .system(size: size, design: .rounded)
+        case .serif: return .system(size: size, design: .serif)
+        case .mono: return .system(size: size, design: .monospaced)
         }
     }
 }

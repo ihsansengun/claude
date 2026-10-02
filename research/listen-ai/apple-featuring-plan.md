@@ -77,6 +77,20 @@ voices are the free tier; Personal Voice is for AAC apps, so no voice cloning.
 Cloud voices provider integration (design the meter now, wire the provider in 1.1), voice cloning,
 podcast generation, iPad/Mac layouts (SwiftUI runs, not tuned), CarPlay, accounts, analytics SDKs.
 
+## 5a. Progress (updated 2026-10-02)
+
+- [x] Day 1–2: scaffold, SwiftData model, PDF + text import, player with highlighting — CI green on Xcode 27
+- [x] Day 3–4: EPUB (ZIPFoundation), article, OCR scan, share sheet → inbox, text cleanup, Now Playing
+- [x] Day 5–6: reading settings, 5 AA-contrast themes, sleep timer, speed; accessibility pass 1
+- [x] Day 7–8: Foundation Models (on-device + PCC path), StoreKit 2 + visible meter
+- [x] Day 9: App Intents (search schema, Continue Listening), Spotlight donation, widget
+- [~] Day 9: Siri Audio App Schema — written, gated until SDK case names confirmed
+- [x] Day 10: accessibility pass 2 (Dynamic Type scaling, Increase Contrast, VoiceOver paragraph labels, Reduce Motion)
+- [x] Day 11: onboarding (3 screens, no paywall); App Store copy + nomination text drafted
+- [ ] Day 12: TestFlight to dyslexic/ADHD readers — needs Apple Developer account + device build
+- [ ] Day 13: app icon, screenshots, preview video, privacy policy page
+- [ ] Day 14: submit; file Featuring Nomination + In-App Event
+
 ## 6. Two-week schedule
 
 | Day | Deliverable |
