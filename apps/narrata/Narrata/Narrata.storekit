@@ -1,0 +1,65 @@
+{
+  "identifier" : "narrata-local",
+  "nonRenewingSubscriptions" : [],
+  "products" : [],
+  "settings" : {
+    "_applicationInternalID" : "",
+    "_developerTeamID" : "",
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : []
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "narrata-plus",
+      "localizations" : [],
+      "name" : "Narrata Plus",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "4.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "plus-monthly",
+          "introductoryOffer" : {
+            "internalID" : "plus-monthly-trial",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P1W"
+          },
+          "localizations" : [
+            { "description" : "Cloud voices with a visible meter, unlimited summaries.", "displayName" : "Plus Monthly", "locale" : "en_US" }
+          ],
+          "productID" : "com.theoryofweb.narrata.plus.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Plus Monthly",
+          "subscriptionGroupID" : "narrata-plus",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "39.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "plus-annual",
+          "introductoryOffer" : {
+            "internalID" : "plus-annual-trial",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P1W"
+          },
+          "localizations" : [
+            { "description" : "Cloud voices with a visible meter, unlimited summaries. Two months free.", "displayName" : "Plus Annual", "locale" : "en_US" }
+          ],
+          "productID" : "com.theoryofweb.narrata.plus.annual",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Plus Annual",
+          "subscriptionGroupID" : "narrata-plus",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : { "major" : 4, "minor" : 0 }
+}

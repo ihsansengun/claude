@@ -87,8 +87,8 @@ podcast generation, iPad/Mac layouts (SwiftUI runs, not tuned), CarPlay, account
 - [x] Day 9: Siri schemas — System domain (`searchInApp`, `open`); Audio domain dropped (music-service shape, not a reader fit)
 - [x] Day 10: accessibility pass 2 (Dynamic Type scaling, Increase Contrast, VoiceOver paragraph labels, Reduce Motion)
 - [x] Day 11: onboarding (3 screens, no paywall); App Store copy + nomination text drafted
-- [ ] Day 12: TestFlight to dyslexic/ADHD readers — needs Apple Developer account + device build
-- [ ] Day 13: app icon, screenshots, preview video, privacy policy page
+- [ ] Day 12: TestFlight to dyslexic/ADHD readers — needs Apple Developer account + device build (steps in apps/narrata/README.md)
+- [~] Day 13: placeholder icon in repo; privacy policy drafted (research/listen-ai/privacy-policy.md); screenshots + preview video still to capture on device
 - [ ] Day 14: submit; file Featuring Nomination + In-App Event
 
 ## 6. Two-week schedule
