@@ -1,12 +1,9 @@
 import AppIntents
 
-#if NARRATA_AUDIO_SCHEMA
+/// Siri AI / App Schemas, Audio domain (WWDC26 session 240). `playAudio` is confirmed in the
+/// iOS 27 SDK; the remaining audio schemas stay gated until the CI schema dump names them.
 
-/// Siri AI / App Schemas, Audio domain (WWDC26 session 240). The schema macros constrain the
-/// intent shape; if the SDK rejects a schema case name below, check
-/// `AppIntentSchema.audio` in the iOS 27 SDK headers and rename accordingly.
-
-@AppIntent(schema: .audio.play)
+@AppIntent(schema: .audio.playAudio)
 struct SiriPlayIntent: AppIntent {
     static let title: LocalizedStringResource = "Play"
     static let openAppWhenRun = true
@@ -20,6 +17,8 @@ struct SiriPlayIntent: AppIntent {
         return .result()
     }
 }
+
+#if NARRATA_AUDIO_SCHEMA
 
 @AppIntent(schema: .audio.pause)
 struct SiriPauseIntent: AppIntent {

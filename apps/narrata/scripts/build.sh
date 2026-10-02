@@ -26,7 +26,7 @@ if [ "$ACTION" = "test" ]; then
   if grep -qE "✘|Test run with [0-9]+ tests? (failed|in)" build/test.log && grep -qE "✘" build/test.log; then
     echo "Swift Testing reported failures"; exit 1
   fi
-  if ! grep -qE "Test run with [1-9][0-9]* tests? passed" build/test.log; then
+  if ! grep -qE "Test run with [1-9][0-9]* tests?( in [0-9]+ suites?)? passed" build/test.log; then
     echo "::warning::No Swift Testing summary found; check that tests ran"
   fi
   if ! grep -q "\*\* TEST SUCCEEDED \*\*" build/test.log; then
