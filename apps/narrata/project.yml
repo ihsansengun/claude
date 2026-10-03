@@ -3,6 +3,7 @@
 name: Narrata
 options:
   bundleIdPrefix: com.theoryofweb
+  developmentLanguage: en
   deploymentTarget:
     iOS: "27.0"
   xcodeVersion: "27.0"
@@ -33,6 +34,7 @@ targets:
       path: Narrata/Info.plist
       properties:
         CFBundleDisplayName: Narrata
+        CFBundleLocalizations: [en, de, fr, es, tr]
         UILaunchScreen: {}
         UIBackgroundModes: [audio]
         NSCameraUsageDescription: Narrata uses the camera to scan printed pages so it can read them aloud.
