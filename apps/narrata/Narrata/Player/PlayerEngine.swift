@@ -65,6 +65,16 @@ final class PlayerEngine: NSObject {
         persistProgress()
     }
 
+    /// Drops the loaded document without touching it again, e.g. after it was deleted
+    /// from the library (writing progress to a deleted SwiftData model would crash).
+    func unload() {
+        synthesizer.stopSpeaking(at: .immediate)
+        isPlaying = false
+        currentWordRange = nil
+        document = nil
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+    }
+
     func seek(toSentence index: Int) {
         guard let document else { return }
         currentSentence = max(0, min(index, document.sentences.count - 1))

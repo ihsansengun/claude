@@ -73,6 +73,8 @@ struct UsageMeter: View {
 struct VoicePickerView: View {
     @Environment(PlayerEngine.self) private var player
     private let voices = VoiceCatalog.all()
+    /// Kept alive for the sample utterance; a temporary synthesizer is deallocated before it speaks.
+    @State private var sampler = AVSpeechSynthesizer()
 
     var body: some View {
         List {
@@ -81,7 +83,8 @@ struct VoicePickerView: View {
                     ForEach(voices.filter { $0.language == language }, id: \.identifier) { voice in
                         Button {
                             player.voice = voice
-                            AVSpeechSynthesizer().speak(sample(for: voice))
+                            sampler.stopSpeaking(at: .immediate)
+                            sampler.speak(sample(for: voice))
                         } label: {
                             HStack {
                                 VStack(alignment: .leading) {

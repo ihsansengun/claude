@@ -34,6 +34,8 @@ struct LibraryView: View {
                         }
                         .onDelete { offsets in
                             for doc in offsets.map({ filteredDocuments[$0] }) {
+                                if player.document?.id == doc.id { player.unload() }
+                                if selected?.id == doc.id { selected = nil }
                                 SpotlightIndexer.remove(doc.id)
                                 context.delete(doc)
                             }
@@ -66,7 +68,8 @@ struct LibraryView: View {
             .sheet(isPresented: $showScanner) {
                 ScannerView { images in
                     Task {
-                        if let doc = try? await ScanImporter.document(from: images) { insert(doc) }
+                        do { insert(try await ScanImporter.document(from: images)) }
+                        catch { importer.lastError = error.localizedDescription }
                     }
                 }
             }

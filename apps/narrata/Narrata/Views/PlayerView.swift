@@ -50,7 +50,7 @@ struct PlayerView: View {
         }
         .task {
             prefs = (try? JSONDecoder().decode(ReadingPrefs.self, from: prefsData)) ?? ReadingPrefs()
-            if document.progressSentence == 0 {
+            if document.progressSentence == 0, preview == nil {
                 let (title, text) = (document.title, document.fullText)
                 preview = await Intelligence.preview(title: title, text: text)
             }

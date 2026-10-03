@@ -29,7 +29,8 @@ Narrata/
   Store/Store.swift           StoreKit 2, monthly/annual Plus, visible cloud-voice meter
 NarrataShare/                 share-sheet extension → App Group inbox
 NarrataWidgets/               "Continue listening" widget
-NarrataTests/                 Swift Testing, text cleanup
+NarrataTests/                 Swift Testing: text cleanup, HTML, EPUB fixture, article extraction
+  Localizable.xcstrings       en source + de, fr, es, tr
 ```
 
 ## Device test and TestFlight (needs your Apple Developer account)
