@@ -110,3 +110,4 @@ targets:
     sources: [NarrataTests]
     dependencies:
       - target: Narrata
+      - package: ZIPFoundation

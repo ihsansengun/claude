@@ -8,14 +8,19 @@ enum ArticleImporter {
         guard let html = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .isoLatin1) else {
             throw ImportError.network
         }
-        let title = EPUBImporter.firstMatch(in: html, pattern: "<title[^>]*>([^<]+)</title>") ?? url.host() ?? "Article"
+        let (title, text) = extract(html: html, fallbackTitle: url.host() ?? "Article")
+        let sentences = TextCleaner.sentences(fromPlainText: text)
+        guard sentences.count > 3 else { throw ImportError.unreadable }
+        return Document(title: title, kind: .article, sentences: sentences, sourceURL: url)
+    }
+
+    /// Pure part of the import, so it can be unit-tested without a network.
+    static func extract(html: String, fallbackTitle: String) -> (title: String, text: String) {
+        let rawTitle = EPUBImporter.firstMatch(in: html, pattern: "<title[^>]*>([^<]+)</title>") ?? fallbackTitle
         let body = EPUBImporter.matches(in: html, pattern: "<article[\\s\\S]*?</article>").first
             ?? EPUBImporter.matches(in: html, pattern: "<main[\\s\\S]*?</main>").first
             ?? html
-        let text = EPUBImporter.plainText(fromHTML: body)
-        let sentences = TextCleaner.sentences(fromPlainText: text)
-        guard sentences.count > 3 else { throw ImportError.unreadable }
-        return Document(title: decode(title), kind: .article, sentences: sentences, sourceURL: url)
+        return (decode(rawTitle), EPUBImporter.plainText(fromHTML: body))
     }
 
 
